@@ -1,5 +1,4 @@
 ﻿using CwkSocial.API.Controllers.Options;
-using Microsoft.AspNetCore.Http.Features;
 
 namespace CwkSocial.API.Registrars
 {

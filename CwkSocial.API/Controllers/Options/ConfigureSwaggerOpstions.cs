@@ -1,7 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc.ApiExplorer;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
@@ -32,7 +30,7 @@ namespace CwkSocial.API.Controllers.Options
                 Version = description.ApiVersion.ToString()
             };
 
-            if(description.IsDeprecated)
+            if (description.IsDeprecated)
             {
                 info.Description = "This API version has been deprecated.";
             }
