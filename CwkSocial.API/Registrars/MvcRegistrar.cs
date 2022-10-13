@@ -9,6 +9,8 @@ namespace CwkSocial.API.Registrars
         {
             builder.Services.AddControllers();
 
+            builder.Services.AddControllers().AddJsonOptions(options => options.JsonSerializerOptions.PropertyNamingPolicy = null);
+
             builder.Services.AddApiVersioning(config =>
             {
                 config.DefaultApiVersion = new ApiVersion(1, 0);
