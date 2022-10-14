@@ -11,7 +11,7 @@ namespace CwkSocial.API.Controllers.V1
     [ApiVersion("1.0")]
     [Route(ApiRoutes.BaseRoute)]
     [ApiController]
-    public class UserProfilesController : Controller
+    public class UserProfilesController : BaseController
     {
         private readonly IMediator _mediator;
         private readonly IMapper _mapper;
@@ -55,13 +55,13 @@ namespace CwkSocial.API.Controllers.V1
 
         [HttpPut]
         [Route($"{ApiRoutes.UserProfiles.IdRoute}")]
-        public async Task<IActionResult> UpdateUserProfile(Guid id, UserProfileCreateUpdate userProfile)
+        public async Task<IActionResult> UpdateUserProfile(Guid id,[FromBody] UserProfileCreateUpdate userProfile)
         {
             var command = _mapper.Map<UpdateUserProfileBasicInfoCommand>(userProfile);
             command.UserProfileId = id;
             var response = await _mediator.Send(command);
 
-            return Ok(response);
+            return response.IsError ? HandlerErrorResponse(response.Errors) : Ok(response);
         }
 
         [HttpDelete]

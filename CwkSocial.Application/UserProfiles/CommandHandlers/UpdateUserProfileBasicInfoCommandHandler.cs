@@ -1,4 +1,5 @@
-﻿using CwkSocial.APPLICATION.UserProfiles.Commands;
+﻿using CwkSocial.APPLICATION.Models;
+using CwkSocial.APPLICATION.UserProfiles.Commands;
 using CwkSocial.DAL.Data;
 using CwkSocial.DOMAIN.Aggregates.UserProfileAggregate;
 using MediatR;
@@ -6,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CwkSocial.APPLICATION.UserProfiles.CommandHandlers
 {
-    internal class UpdateUserProfileBasicInfoCommandHandler : IRequestHandler<UpdateUserProfileBasicInfoCommand, bool>
+    internal class UpdateUserProfileBasicInfoCommandHandler : IRequestHandler<UpdateUserProfileBasicInfoCommand, OperationResult<UserProfile>>
     {
         private readonly DataContext _dataContext;
 
@@ -15,20 +16,55 @@ namespace CwkSocial.APPLICATION.UserProfiles.CommandHandlers
             _dataContext = dataContext;
         }
 
-        public async Task<bool> Handle(UpdateUserProfileBasicInfoCommand request, CancellationToken cancellationToken)
+        public async Task<OperationResult<UserProfile>> Handle(UpdateUserProfileBasicInfoCommand request, CancellationToken cancellationToken)
         {
-            var userProfile = await _dataContext.UserProfiles.
+            var result = new OperationResult<UserProfile>();
+
+            try
+            {
+                var userProfile = await _dataContext.UserProfiles.
                 FirstOrDefaultAsync(userProfile => userProfile.UserProfileId == request.UserProfileId);
 
-            var basicInfo = BasicInfo.CreateBasicInfo(request.FirstName, request.LastName, request.EmailAddress,
-                request.PhoneNumber, request.DateOfBirth, request.CurrentCity);
+                if (userProfile is null)
+                {
+                    var error = new Error
+                    {
+                        Code = ErrorCode.NotFound,
+                        Message = $"No UserProfile with ID {request.UserProfileId}"
+                    };
 
-            userProfile.UpdateBasicInfo(basicInfo);
+                    result.IsError = true;
+                    result.Errors.Add(error);
 
-            _dataContext.UserProfiles.Update(userProfile);
-            await _dataContext.SaveChangesAsync();
+                    return result;
+                }
 
-            return true;
+                var basicInfo = BasicInfo.CreateBasicInfo(request.FirstName, request.LastName, request.EmailAddress,
+                    request.PhoneNumber, request.DateOfBirth, request.CurrentCity);
+
+                userProfile.UpdateBasicInfo(basicInfo);
+
+                _dataContext.UserProfiles.Update(userProfile);
+                await _dataContext.SaveChangesAsync();
+
+                result.PayLoad = userProfile;
+                return result;
+            }
+            catch (Exception ex)
+            {
+                var error = new Error
+                {
+                    Code = ErrorCode.ServerError,
+                    Message = ex.Message
+                };
+
+                result.IsError = true;
+                result.Errors.Add(error);
+
+                return result;
+            }
+
+            return result;
         }
     }
 }
