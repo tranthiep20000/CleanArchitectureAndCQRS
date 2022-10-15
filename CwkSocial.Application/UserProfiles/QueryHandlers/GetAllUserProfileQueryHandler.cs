@@ -1,4 +1,5 @@
-﻿using CwkSocial.APPLICATION.UserProfiles.Queries;
+﻿using CwkSocial.APPLICATION.Models;
+using CwkSocial.APPLICATION.UserProfiles.Queries;
 using CwkSocial.DAL.Data;
 using CwkSocial.DOMAIN.Aggregates.UserProfileAggregate;
 using MediatR;
@@ -6,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CwkSocial.APPLICATION.UserProfiles.QueryHandlers
 {
-    internal class GetAllUserProfileQueryHandler : IRequestHandler<GetAllUserProfileQuery, IEnumerable<UserProfile>>
+    internal class GetAllUserProfileQueryHandler : IRequestHandler<GetAllUserProfileQuery, OperationResult<IEnumerable<UserProfile>>>
     {
         private readonly DataContext _dataContext;
 
@@ -15,9 +16,30 @@ namespace CwkSocial.APPLICATION.UserProfiles.QueryHandlers
             _dataContext = dataContext;
         }
 
-        public async Task<IEnumerable<UserProfile>> Handle(GetAllUserProfileQuery request, CancellationToken cancellationToken)
+        public async Task<OperationResult<IEnumerable<UserProfile>>> Handle(GetAllUserProfileQuery request, CancellationToken cancellationToken)
         {
-            return await _dataContext.UserProfiles.ToListAsync();
+            var result = new OperationResult<IEnumerable<UserProfile>>();
+
+            try
+            {
+                var userProfiles =  await _dataContext.UserProfiles.ToListAsync();
+
+                result.PayLoad = userProfiles;
+                return result;
+            }
+            catch (Exception ex)
+            {
+                var error = new Error
+                {
+                    Code = ErrorCode.ServerError,
+                    Message = ex.Message
+                };
+
+                result.IsError = true;
+                result.Errors.Add(error);
+
+                return result;
+            }
         }
     }
 }

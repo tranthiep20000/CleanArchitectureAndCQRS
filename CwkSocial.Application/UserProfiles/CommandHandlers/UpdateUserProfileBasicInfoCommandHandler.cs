@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CwkSocial.APPLICATION.UserProfiles.CommandHandlers
 {
-    internal class UpdateUserProfileBasicInfoCommandHandler : IRequestHandler<UpdateUserProfileBasicInfoCommand, OperationResult<UserProfile>>
+    internal class UpdateUserProfileBasicInfoCommandHandler : IRequestHandler<UpdateUserProfileBasicInfoCommand, OperationResult<bool>>
     {
         private readonly DataContext _dataContext;
 
@@ -16,9 +16,9 @@ namespace CwkSocial.APPLICATION.UserProfiles.CommandHandlers
             _dataContext = dataContext;
         }
 
-        public async Task<OperationResult<UserProfile>> Handle(UpdateUserProfileBasicInfoCommand request, CancellationToken cancellationToken)
+        public async Task<OperationResult<bool>> Handle(UpdateUserProfileBasicInfoCommand request, CancellationToken cancellationToken)
         {
-            var result = new OperationResult<UserProfile>();
+            var result = new OperationResult<bool>();
 
             try
             {
@@ -47,7 +47,7 @@ namespace CwkSocial.APPLICATION.UserProfiles.CommandHandlers
                 _dataContext.UserProfiles.Update(userProfile);
                 await _dataContext.SaveChangesAsync();
 
-                result.PayLoad = userProfile;
+                result.PayLoad = true;
                 return result;
             }
             catch (Exception ex)
@@ -63,8 +63,6 @@ namespace CwkSocial.APPLICATION.UserProfiles.CommandHandlers
 
                 return result;
             }
-
-            return result;
         }
     }
 }

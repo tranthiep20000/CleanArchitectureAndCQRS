@@ -4,7 +4,7 @@ using MediatR;
 
 namespace CwkSocial.APPLICATION.UserProfiles.Commands
 {
-    public class UpdateUserProfileBasicInfoCommand : IRequest<OperationResult<UserProfile>>
+    public class UpdateUserProfileBasicInfoCommand : IRequest<OperationResult<bool>>
     {
         public Guid UserProfileId { get; set; }
         public string FirstName { get; set; }
