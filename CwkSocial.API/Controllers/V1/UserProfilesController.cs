@@ -37,6 +37,7 @@ namespace CwkSocial.API.Controllers.V1
 
             return Ok(userProfiles);
         }
+
         [ValidateModel]
         [HttpPost]
         public async Task<IActionResult> CreateUserProfile([FromBody] UserProfileCreateUpdate userProfileCreate)
@@ -54,6 +55,7 @@ namespace CwkSocial.API.Controllers.V1
 
         [HttpGet]
         [Route($"{ApiRoutes.UserProfiles.IdRoute}")]
+        [ValidateGuid($"{ApiRoutes.UserProfiles.IdRoute}")]
         public async Task<IActionResult> GetUserProfileById(Guid id)
         {
             var query = new GetUserProfileByIdQuery { UserProfileId = id };
@@ -70,6 +72,7 @@ namespace CwkSocial.API.Controllers.V1
         [ValidateModel]
         [HttpPut]
         [Route($"{ApiRoutes.UserProfiles.IdRoute}")]
+        [ValidateGuid($"{ApiRoutes.UserProfiles.IdRoute}")]
         public async Task<IActionResult> UpdateUserProfile(Guid id, [FromBody] UserProfileCreateUpdate userProfile)
         {
             var command = _mapper.Map<UpdateUserProfileBasicInfoCommand>(userProfile);
@@ -81,6 +84,7 @@ namespace CwkSocial.API.Controllers.V1
 
         [HttpDelete]
         [Route($"{ApiRoutes.UserProfiles.IdRoute}")]
+        [ValidateGuid($"{ApiRoutes.UserProfiles.IdRoute}")]
         public async Task<IActionResult> DeleteUserProfile(Guid id)
         {
             var command = new DeleteUserProfileCommand { UserProfileId = id };
