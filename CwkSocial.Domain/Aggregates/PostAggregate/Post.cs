@@ -1,4 +1,6 @@
 ﻿using CwkSocial.DOMAIN.Aggregates.UserProfileAggregate;
+using CwkSocial.DOMAIN.Exceptions;
+using CwkSocial.DOMAIN.Validators.PostValidators;
 
 namespace CwkSocial.DOMAIN.Aggregates.PostAggregate
 {
@@ -21,20 +23,50 @@ namespace CwkSocial.DOMAIN.Aggregates.PostAggregate
         public IEnumerable<PostInteraction> Interactions { get { return _interactions; } }
 
         // Factories
+        /// <summary>
+        /// Create a post
+        /// </summary>
+        /// <param name="userProfileId">Id of userprofile</param>
+        /// <param name="textContent">Text content of post</param>
+        /// <returns cref="Post"></returns>
+        /// <exception cref="PostValidateException"></exception>
+        /// CreatedBy: ThiepTT(18/10/2022)
         public static Post CreatePost(Guid userProfileId, string textContent)
         {
-            return new Post
+            var objectToValidate =  new Post
             {
                 UserProfileId = userProfileId,
                 TextContent = textContent,
                 CreatedDate = DateTime.UtcNow,
                 LastModified = DateTime.UtcNow
             };
+
+            var validator = new PostValidator();
+            var validationResult = validator.Validate(objectToValidate);
+
+            if (validationResult.IsValid) return objectToValidate;
+
+            var exception = new PostValidateException("Post is not valid");
+
+            foreach (var error in validationResult.Errors)
+            {
+                exception.ValidationErrors.Add(error.ErrorMessage);
+            }
+
+            throw exception;
         }
 
         // Public method
         public void UpdatePostText(string textContent)
         {
+            if (string.IsNullOrWhiteSpace(textContent))
+            {
+                var exception = new PostValidateException("Cannot update post. Post text is not valid");
+                exception.ValidationErrors.Add("The provided text is either null or contains only white space");
+
+                throw exception;
+            }    
+
             TextContent = textContent;
             LastModified = DateTime.UtcNow;
         }

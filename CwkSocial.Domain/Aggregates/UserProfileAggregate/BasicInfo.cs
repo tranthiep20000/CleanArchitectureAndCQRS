@@ -1,4 +1,7 @@
-﻿namespace CwkSocial.DOMAIN.Aggregates.UserProfileAggregate
+﻿using CwkSocial.DOMAIN.Exceptions;
+using CwkSocial.DOMAIN.Validators.UserProfileValidators;
+
+namespace CwkSocial.DOMAIN.Aggregates.UserProfileAggregate
 {
     public class BasicInfo
     {
@@ -16,7 +19,7 @@
         public static BasicInfo CreateBasicInfo(string firstName, string lastName, string emailAddress,
             string phoneNumber, DateTime dateOfBirth, string currentCity)
         {
-            return new BasicInfo
+            var objectToValidate =  new BasicInfo
             {
                 FirstName = firstName,
                 LastName = lastName,
@@ -25,6 +28,20 @@
                 DateOfBirth = dateOfBirth,
                 CurrentCity = currentCity
             };
+
+            var validator = new BasicInfoValidator();
+            var validationResult = validator.Validate(objectToValidate);
+
+            if (validationResult.IsValid) return objectToValidate;
+
+            var exception = new UserProfileValidateException("The user profile is not valid");
+
+            foreach (var error in validationResult.Errors)
+            {
+                exception.ValidationErrors.Add(error.ErrorMessage);
+            }
+
+            throw exception;
         }
     }
 }

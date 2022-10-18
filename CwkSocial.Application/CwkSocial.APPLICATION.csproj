@@ -13,9 +13,7 @@
 
   <ItemGroup>
     <Folder Include="Posts\Commands\" />
-    <Folder Include="Posts\CommandHandles\" />
-    <Folder Include="Posts\QueryHandles\" />
-    <Folder Include="Posts\Queries\" />
+    <Folder Include="Posts\CommandHandlers\" />
   </ItemGroup>
 
   <ItemGroup>

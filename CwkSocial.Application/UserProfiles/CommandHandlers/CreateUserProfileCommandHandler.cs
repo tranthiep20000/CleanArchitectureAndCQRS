@@ -2,6 +2,7 @@
 using CwkSocial.APPLICATION.UserProfiles.Commands;
 using CwkSocial.DAL.Data;
 using CwkSocial.DOMAIN.Aggregates.UserProfileAggregate;
+using CwkSocial.DOMAIN.Exceptions;
 using MediatR;
 
 namespace CwkSocial.APPLICATION.UserProfiles.CommandHandlers
@@ -30,21 +31,35 @@ namespace CwkSocial.APPLICATION.UserProfiles.CommandHandlers
                 await _dataContext.SaveChangesAsync();
 
                 result.PayLoad = userProfile;
-                return result;
+            }
+            catch(UserProfileValidateException ex)
+            {
+                result.IsError = true;
+
+                ex.ValidationErrors.ForEach(e =>
+                {
+                    var error = new Error()
+                    {
+                        Code = ErrorCode.ValidationError,
+                        Message = $"{ex.Message}"
+                    };
+
+                    result.Errors.Add(error);
+                });
             }
             catch (Exception ex)
             {
                 var error = new Error
                 {
-                    Code = ErrorCode.ServerError,
+                    Code = ErrorCode.UnknowError,
                     Message = ex.Message
                 };
 
                 result.IsError = true;
                 result.Errors.Add(error);
-
-                return result;
             }
+
+            return result;
         }
     }
 }

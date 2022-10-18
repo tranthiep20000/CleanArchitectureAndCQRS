@@ -42,21 +42,20 @@ namespace CwkSocial.APPLICATION.UserProfiles.CommandHandlers
                 await _dataContext.SaveChangesAsync();
 
                 result.PayLoad = true;
-                return result;
             }
             catch (Exception ex)
             {
                 var error = new Error
                 {
-                    Code = ErrorCode.ServerError,
+                    Code = ErrorCode.UnknowError,
                     Message = ex.Message
                 };
 
                 result.IsError = true;
                 result.Errors.Add(error);
-
-                return result;
             }
+
+            return result;
         }
     }
 }

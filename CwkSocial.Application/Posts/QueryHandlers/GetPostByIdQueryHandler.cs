@@ -1,36 +1,35 @@
 ﻿using CwkSocial.APPLICATION.Models;
-using CwkSocial.APPLICATION.UserProfiles.Queries;
+using CwkSocial.APPLICATION.Posts.Queries;
 using CwkSocial.DAL.Data;
-using CwkSocial.DOMAIN.Aggregates.UserProfileAggregate;
+using CwkSocial.DOMAIN.Aggregates.PostAggregate;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
-namespace CwkSocial.APPLICATION.UserProfiles.QueryHandlers
+namespace CwkSocial.APPLICATION.Posts.QueryHandlers
 {
-    internal class GetUserProfileByIdQueryHandler : IRequestHandler<GetUserProfileByIdQuery, OperationResult<UserProfile>>
+    internal class GetPostByIdQueryHandler : IRequestHandler<GetPostByIdQuery, OperationResult<Post>>
     {
         private readonly DataContext _dataContext;
-
-        public GetUserProfileByIdQueryHandler(DataContext dataContext)
+        public GetPostByIdQueryHandler(DataContext dataContext)
         {
             _dataContext = dataContext;
         }
 
-        public async Task<OperationResult<UserProfile>> Handle(GetUserProfileByIdQuery request, CancellationToken cancellationToken)
+        public async Task<OperationResult<Post>> Handle(GetPostByIdQuery request, CancellationToken cancellationToken)
         {
-            var result = new OperationResult<UserProfile>();
+            var result = new OperationResult<Post>();
 
             try
             {
-                var userProfile = await _dataContext.UserProfiles
-                    .FirstOrDefaultAsync(userProfile => userProfile.UserProfileId == request.UserProfileId);
+                var post = await _dataContext.Posts.
+                    FirstOrDefaultAsync(post => post.PostId == request.PostId);
 
-                if (userProfile is null)
+                if (post is null)
                 {
                     var error = new Error
                     {
                         Code = ErrorCode.NotFound,
-                        Message = $"No UserProfile with ID {request.UserProfileId}"
+                        Message = $"No Post with ID {request.PostId}"
                     };
 
                     result.IsError = true;
@@ -38,8 +37,6 @@ namespace CwkSocial.APPLICATION.UserProfiles.QueryHandlers
 
                     return result;
                 }
-
-                result.PayLoad = userProfile;
             }
             catch (Exception ex)
             {

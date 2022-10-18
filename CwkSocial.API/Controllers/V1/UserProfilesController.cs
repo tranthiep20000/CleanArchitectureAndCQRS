@@ -38,8 +38,8 @@ namespace CwkSocial.API.Controllers.V1
             return Ok(userProfiles);
         }
 
-        [ValidateModel]
         [HttpPost]
+        [ValidateModel]
         public async Task<IActionResult> CreateUserProfile([FromBody] UserProfileCreateUpdate userProfileCreate)
         {
             var command = _mapper.Map<CreateUserProfileCommand>(userProfileCreate);
@@ -69,9 +69,9 @@ namespace CwkSocial.API.Controllers.V1
             return Ok(userProfile);
         }
 
-        [ValidateModel]
         [HttpPut]
         [Route($"{ApiRoutes.UserProfiles.IdRoute}")]
+        [ValidateModel]
         [ValidateGuid($"{ApiRoutes.UserProfiles.IdRoute}")]
         public async Task<IActionResult> UpdateUserProfile(Guid id, [FromBody] UserProfileCreateUpdate userProfile)
         {
