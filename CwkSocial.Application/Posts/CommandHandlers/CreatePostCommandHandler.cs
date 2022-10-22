@@ -1,34 +1,34 @@
 ﻿using CwkSocial.APPLICATION.Models;
-using CwkSocial.APPLICATION.UserProfiles.Commands;
+using CwkSocial.APPLICATION.Posts.Commands;
 using CwkSocial.DAL.Data;
-using CwkSocial.DOMAIN.Aggregates.UserProfileAggregate;
+using CwkSocial.DOMAIN.Aggregates.PostAggregate;
 using CwkSocial.DOMAIN.Exceptions;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
-namespace CwkSocial.APPLICATION.UserProfiles.CommandHandlers
+namespace CwkSocial.APPLICATION.Posts.CommandHandlers
 {
-    internal class UpdateUserProfileBasicInfoCommandHandler : IRequestHandler<UpdateUserProfileBasicInfoCommand, OperationResult<bool>>
+    internal class CreatePostCommandHandler : IRequestHandler<CreatePostCommand, OperationResult<Post>>
     {
         private readonly DataContext _dataContext;
 
-        public UpdateUserProfileBasicInfoCommandHandler(DataContext dataContext)
+        public CreatePostCommandHandler(DataContext dataContext)
         {
             _dataContext = dataContext;
         }
 
-        public async Task<OperationResult<bool>> Handle(UpdateUserProfileBasicInfoCommand request, CancellationToken cancellationToken)
+        public async Task<OperationResult<Post>> Handle(CreatePostCommand request, CancellationToken cancellationToken)
         {
-            var result = new OperationResult<bool>();
+            var result = new OperationResult<Post>();
 
             try
             {
-                var userProfile = await _dataContext.UserProfiles.
-                FirstOrDefaultAsync(userProfile => userProfile.UserProfileId == request.UserProfileId);
+                var userProfile = await _dataContext.UserProfiles
+                    .FirstOrDefaultAsync(userProfile => userProfile.UserProfileId == request.UserProfileId);
 
-                if (userProfile is null)
+                if(userProfile is null)
                 {
-                    var error = new Error
+                    var error = new Error()
                     {
                         Code = ErrorCode.NotFound,
                         Message = $"No UserProfile with ID {request.UserProfileId}"
@@ -40,17 +40,15 @@ namespace CwkSocial.APPLICATION.UserProfiles.CommandHandlers
                     return result;
                 }
 
-                var basicInfo = BasicInfo.CreateBasicInfo(request.FirstName, request.LastName, request.EmailAddress,
-                    request.PhoneNumber, request.DateOfBirth, request.CurrentCity);
+                var post = Post.CreatePost(request.UserProfileId, request.TextContent);
 
-                userProfile.UpdateBasicInfo(basicInfo);
-
-                _dataContext.UserProfiles.Update(userProfile);
+                _dataContext.Posts.Add(post);
                 await _dataContext.SaveChangesAsync();
 
-                result.PayLoad = true;
+                result.PayLoad = post;
+
             }
-            catch(UserProfileValidateException ex)
+            catch (PostValidateException ex)
             {
                 result.IsError = true;
 
@@ -65,6 +63,7 @@ namespace CwkSocial.APPLICATION.UserProfiles.CommandHandlers
                     result.Errors.Add(error);
                 });
             }
+
             catch (Exception ex)
             {
                 var error = new Error

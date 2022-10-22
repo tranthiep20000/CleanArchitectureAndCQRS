@@ -7,26 +7,28 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CwkSocial.APPLICATION.Posts.QueryHandlers
 {
-    internal class GetPostByIdQueryHandler : IRequestHandler<GetPostByIdQuery, OperationResult<Post>>
+    internal class GetAllPostInteractionsByPostIdQueryHandler : IRequestHandler<GetAllPostInteractionsByPostIdQuery, OperationResult<IEnumerable<PostInteraction>>>
     {
         private readonly DataContext _dataContext;
-        public GetPostByIdQueryHandler(DataContext dataContext)
+
+        public GetAllPostInteractionsByPostIdQueryHandler(DataContext dataContext)
         {
             _dataContext = dataContext;
         }
 
-        public async Task<OperationResult<Post>> Handle(GetPostByIdQuery request, CancellationToken cancellationToken)
+        public async Task<OperationResult<IEnumerable<PostInteraction>>> Handle(GetAllPostInteractionsByPostIdQuery request, CancellationToken cancellationToken)
         {
-            var result = new OperationResult<Post>();
+            var result = new OperationResult<IEnumerable<PostInteraction>>();
 
             try
             {
-                var post = await _dataContext.Posts.
-                    FirstOrDefaultAsync(post => post.PostId == request.PostId);
+                var post = await _dataContext.Posts
+                    .Include(postInteractions => postInteractions.Interactions)
+                    .FirstOrDefaultAsync(p => p.PostId == request.PostId);
 
                 if (post is null)
                 {
-                    var error = new Error
+                    var error = new Error()
                     {
                         Code = ErrorCode.NotFound,
                         Message = $"No Post with ID {request.PostId}"
@@ -38,11 +40,11 @@ namespace CwkSocial.APPLICATION.Posts.QueryHandlers
                     return result;
                 }
 
-                result.PayLoad = post;
+                result.PayLoad = post.Interactions;
             }
             catch (Exception ex)
             {
-                var error = new Error
+                var error = new Error()
                 {
                     Code = ErrorCode.UnknowError,
                     Message = $"{ex.Message}"

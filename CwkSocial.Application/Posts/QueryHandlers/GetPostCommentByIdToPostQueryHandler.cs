@@ -7,22 +7,24 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CwkSocial.APPLICATION.Posts.QueryHandlers
 {
-    internal class GetPostByIdQueryHandler : IRequestHandler<GetPostByIdQuery, OperationResult<Post>>
+    internal class GetPostCommentByIdToPostQueryHandler : IRequestHandler<GetPostCommentByIdToPostQuery, OperationResult<PostComment>>
     {
         private readonly DataContext _dataContext;
-        public GetPostByIdQueryHandler(DataContext dataContext)
+
+        public GetPostCommentByIdToPostQueryHandler(DataContext dataContext)
         {
             _dataContext = dataContext;
         }
 
-        public async Task<OperationResult<Post>> Handle(GetPostByIdQuery request, CancellationToken cancellationToken)
+        public async Task<OperationResult<PostComment>> Handle(GetPostCommentByIdToPostQuery request, CancellationToken cancellationToken)
         {
-            var result = new OperationResult<Post>();
+            var result = new OperationResult<PostComment>();
 
             try
             {
-                var post = await _dataContext.Posts.
-                    FirstOrDefaultAsync(post => post.PostId == request.PostId);
+                var post = await _dataContext.Posts
+                    .Include(postComments => postComments.Comments)
+                    .FirstOrDefaultAsync(p => p.PostId == request.PostId);
 
                 if (post is null)
                 {
@@ -38,7 +40,23 @@ namespace CwkSocial.APPLICATION.Posts.QueryHandlers
                     return result;
                 }
 
-                result.PayLoad = post;
+                var postComment = post.Comments.FirstOrDefault(comment => comment.CommentId == request.CommentId);
+
+                if (postComment is null)
+                {
+                    var error = new Error
+                    {
+                        Code = ErrorCode.NotFound,
+                        Message = $"No PostComment with ID {request.CommentId}"
+                    };
+
+                    result.IsError = true;
+                    result.Errors.Add(error);
+
+                    return result;
+                }
+
+                result.PayLoad = postComment;
             }
             catch (Exception ex)
             {

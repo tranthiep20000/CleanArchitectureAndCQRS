@@ -14,7 +14,7 @@ namespace CwkSocial.API.Filters
             apiError.TimeStamp = DateTime.UtcNow;
             apiError.Errors.Add(context.Exception.Message);
 
-            context.Result = new JsonResult(apiError);
+            context.Result = new JsonResult(apiError) { StatusCode = 500};
         }
     }
 }

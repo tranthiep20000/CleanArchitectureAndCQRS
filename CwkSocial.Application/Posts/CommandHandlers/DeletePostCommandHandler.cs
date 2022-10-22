@@ -1,32 +1,32 @@
 ﻿using CwkSocial.APPLICATION.Models;
-using CwkSocial.APPLICATION.Posts.Queries;
+using CwkSocial.APPLICATION.Posts.Commands;
 using CwkSocial.DAL.Data;
-using CwkSocial.DOMAIN.Aggregates.PostAggregate;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
-namespace CwkSocial.APPLICATION.Posts.QueryHandlers
+namespace CwkSocial.APPLICATION.Posts.CommandHandlers
 {
-    internal class GetPostByIdQueryHandler : IRequestHandler<GetPostByIdQuery, OperationResult<Post>>
+    internal class DeletePostCommandHandler : IRequestHandler<DeletePostCommand, OperationResult<bool>>
     {
         private readonly DataContext _dataContext;
-        public GetPostByIdQueryHandler(DataContext dataContext)
+
+        public DeletePostCommandHandler(DataContext dataContext)
         {
             _dataContext = dataContext;
         }
 
-        public async Task<OperationResult<Post>> Handle(GetPostByIdQuery request, CancellationToken cancellationToken)
+        public async Task<OperationResult<bool>> Handle(DeletePostCommand request, CancellationToken cancellationToken)
         {
-            var result = new OperationResult<Post>();
+            var result = new OperationResult<bool>();
 
             try
             {
-                var post = await _dataContext.Posts.
-                    FirstOrDefaultAsync(post => post.PostId == request.PostId);
+                var post = await _dataContext.Posts
+                    .FirstOrDefaultAsync(post => post.PostId == request.PostId);
 
                 if (post is null)
                 {
-                    var error = new Error
+                    var error = new Error()
                     {
                         Code = ErrorCode.NotFound,
                         Message = $"No Post with ID {request.PostId}"
@@ -38,7 +38,10 @@ namespace CwkSocial.APPLICATION.Posts.QueryHandlers
                     return result;
                 }
 
-                result.PayLoad = post;
+                _dataContext.Posts.Remove(post);
+                await _dataContext.SaveChangesAsync();
+
+                result.PayLoad = true;
             }
             catch (Exception ex)
             {

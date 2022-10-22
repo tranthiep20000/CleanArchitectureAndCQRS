@@ -52,7 +52,7 @@ namespace CwkSocial.APPLICATION.UserProfiles.CommandHandlers
                 var error = new Error
                 {
                     Code = ErrorCode.UnknowError,
-                    Message = ex.Message
+                    Message = $"{ex.Message}"
                 };
 
                 result.IsError = true;

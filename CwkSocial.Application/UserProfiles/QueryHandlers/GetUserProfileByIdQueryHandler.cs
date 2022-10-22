@@ -46,7 +46,7 @@ namespace CwkSocial.APPLICATION.UserProfiles.QueryHandlers
                 var error = new Error
                 {
                     Code = ErrorCode.UnknowError,
-                    Message = ex.Message
+                    Message = $"{ex.Message}"
                 };
 
                 result.IsError = true;

@@ -7,22 +7,24 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CwkSocial.APPLICATION.Posts.QueryHandlers
 {
-    internal class GetPostByIdQueryHandler : IRequestHandler<GetPostByIdQuery, OperationResult<Post>>
+    internal class GetAllPostCommentsByPostIdQueryHandler : IRequestHandler<GetAllPostCommentsByPostIdQuery, OperationResult<IEnumerable<PostComment>>>
     {
         private readonly DataContext _dataContext;
-        public GetPostByIdQueryHandler(DataContext dataContext)
+
+        public GetAllPostCommentsByPostIdQueryHandler(DataContext dataContext)
         {
             _dataContext = dataContext;
         }
 
-        public async Task<OperationResult<Post>> Handle(GetPostByIdQuery request, CancellationToken cancellationToken)
+        public async Task<OperationResult<IEnumerable<PostComment>>> Handle(GetAllPostCommentsByPostIdQuery request, CancellationToken cancellationToken)
         {
-            var result = new OperationResult<Post>();
+            var result = new OperationResult<IEnumerable<PostComment>>();
 
             try
             {
-                var post = await _dataContext.Posts.
-                    FirstOrDefaultAsync(post => post.PostId == request.PostId);
+                var post = await _dataContext.Posts
+                    .Include(post => post.Comments)
+                    .FirstOrDefaultAsync(post => post.PostId == request.PostId);
 
                 if (post is null)
                 {
@@ -38,7 +40,7 @@ namespace CwkSocial.APPLICATION.Posts.QueryHandlers
                     return result;
                 }
 
-                result.PayLoad = post;
+                result.PayLoad = post.Comments;
             }
             catch (Exception ex)
             {

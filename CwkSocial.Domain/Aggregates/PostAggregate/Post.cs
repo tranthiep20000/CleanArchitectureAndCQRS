@@ -33,7 +33,7 @@ namespace CwkSocial.DOMAIN.Aggregates.PostAggregate
         /// CreatedBy: ThiepTT(18/10/2022)
         public static Post CreatePost(Guid userProfileId, string textContent)
         {
-            var objectToValidate =  new Post
+            var objectToValidate = new Post
             {
                 UserProfileId = userProfileId,
                 TextContent = textContent,
@@ -65,7 +65,7 @@ namespace CwkSocial.DOMAIN.Aggregates.PostAggregate
                 exception.ValidationErrors.Add("The provided text is either null or contains only white space");
 
                 throw exception;
-            }    
+            }
 
             TextContent = textContent;
             LastModified = DateTime.UtcNow;
