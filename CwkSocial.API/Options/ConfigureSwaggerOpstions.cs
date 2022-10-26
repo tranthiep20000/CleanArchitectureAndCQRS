@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc.ApiExplorer;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerGen;
@@ -20,6 +21,13 @@ namespace CwkSocial.API.Controllers.Options
             {
                 options.SwaggerDoc(description.GroupName, CreateVersionInfo(description));
             }
+
+            var schema = GetJwtSecuritySchema();
+            options.AddSecurityDefinition(schema.Reference.Id, schema);
+            options.AddSecurityRequirement(new OpenApiSecurityRequirement
+            {
+                {schema, new string[0]}
+            });
         }
 
         private OpenApiInfo CreateVersionInfo(ApiVersionDescription description)
@@ -36,6 +44,24 @@ namespace CwkSocial.API.Controllers.Options
             }
 
             return info;
+        }
+
+        private OpenApiSecurityScheme GetJwtSecuritySchema()
+        {
+            return new OpenApiSecurityScheme
+            {
+                Name = "Jwt Authentication",
+                Description = "Provide a JWT Bearer",
+                In = ParameterLocation.Header,
+                Type = SecuritySchemeType.Http,
+                Scheme = "bearer",
+                BearerFormat = "JWT",
+                Reference = new OpenApiReference
+                {
+                    Id = JwtBearerDefaults.AuthenticationScheme,
+                    Type = ReferenceType.SecurityScheme
+                }
+            };
         }
     }
 }

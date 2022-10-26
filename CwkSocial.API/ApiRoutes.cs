@@ -17,5 +17,11 @@
             public const string PostInteractions = "{postId}/interactions";
             public const string InteractionById = "{postId}/interactions/{interactionId}";
         }
+
+        public class Identity
+        {
+            public const string Login = "login";
+            public const string Registration = "registration";
+        }
     }
 }

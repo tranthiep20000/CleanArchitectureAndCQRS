@@ -13,13 +13,13 @@
         public DateTime LastModified { get; private set; }
 
         // Factories
-        public static UserProfile CreateUserProfile(string indentityId, BasicInfo basicInfo)
+        public static UserProfile CreateUserProfile(string identityId, BasicInfo basicInfo)
         {
             // TODO: add validation, error handling strategies, error notification strategies
 
             return new UserProfile
             {
-                IdentityId = indentityId,
+                IdentityId = identityId,
                 BasicInfo = basicInfo,
                 CreatedDate = DateTime.UtcNow,
                 LastModified = DateTime.UtcNow

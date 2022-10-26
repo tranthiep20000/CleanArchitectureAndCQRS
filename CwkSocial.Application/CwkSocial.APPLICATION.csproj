@@ -16,4 +16,9 @@
     <ProjectReference Include="..\CwkSocial.Domain\CwkSocial.DOMAIN.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Identity\QueryHandlers\" />
+    <Folder Include="Identity\Queries\" />
+  </ItemGroup>
+
 </Project>
