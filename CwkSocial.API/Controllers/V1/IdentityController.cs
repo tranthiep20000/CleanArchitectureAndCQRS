@@ -31,12 +31,7 @@ namespace CwkSocial.API.Controllers.V1
 
             var response = await _mediator.Send(command);
 
-            if (response.IsError)
-                return HandlerErrorResponse(response.Errors);
-
-            var authenticationResult = response.PayLoad;
-
-            return Ok(authenticationResult);
+            return response.IsError ? HandlerErrorResponse(response.Errors) : Ok(response);
         }
     }
 }
