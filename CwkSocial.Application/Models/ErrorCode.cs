@@ -11,6 +11,8 @@
         // Infrastructure errors should be in the range 201 - 299
         IdentityUserAlreadyExists = 201,
         IdentityCreationFailed = 202,
+        IdentityUserDoesNotExsist = 203,
+        IncorrectPassword = 204,
 
         UnknowError = 999
     }

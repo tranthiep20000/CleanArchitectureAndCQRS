@@ -5,6 +5,7 @@ using CwkSocial.API.Filters;
 using CwkSocial.APPLICATION.UserProfiles.Commands;
 using CwkSocial.APPLICATION.UserProfiles.Queries;
 using MediatR;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -14,7 +15,7 @@ namespace CwkSocial.API.Controllers.V1
     [Route(ApiRoutes.BaseRoute)]
     [ApiController]
     [CwkSocialExceptionHandler]
-    [Authorize]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public class UserProfilesController : BaseController
     {
         private readonly IMediator _mediator;

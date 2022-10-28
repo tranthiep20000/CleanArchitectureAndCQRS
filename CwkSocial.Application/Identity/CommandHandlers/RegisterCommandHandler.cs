@@ -1,16 +1,14 @@
 ﻿using CwkSocial.APPLICATION.Identity.Commands;
 using CwkSocial.APPLICATION.Models;
-using CwkSocial.APPLICATION.Options;
+using CwkSocial.APPLICATION.Services;
 using CwkSocial.DAL.Data;
 using CwkSocial.DOMAIN.Aggregates.UserProfileAggregate;
 using CwkSocial.DOMAIN.Exceptions;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.Options;
-using Microsoft.IdentityModel.Tokens;
+using Microsoft.EntityFrameworkCore.Storage;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using System.Text;
 
 namespace CwkSocial.APPLICATION.Identity.CommandHandlers
 {
@@ -18,13 +16,13 @@ namespace CwkSocial.APPLICATION.Identity.CommandHandlers
     {
         private readonly DataContext _dataContext;
         private readonly UserManager<IdentityUser> _userManager;
-        private readonly JwtSettings _jwtSettings;
+        private readonly IdentityService _identityService;
 
-        public RegisterCommandHandler(DataContext dataContext, UserManager<IdentityUser> userManager, IOptions<JwtSettings> jwtSettings)
+        public RegisterCommandHandler(DataContext dataContext, UserManager<IdentityUser> userManager, IdentityService identityService)
         {
             _dataContext = dataContext;
             _userManager = userManager;
-            _jwtSettings = jwtSettings.Value;
+            _identityService = identityService;
         }
 
         public async Task<OperationResult<string>> Handle(RegisterCommand request, CancellationToken cancellationToken)
@@ -33,90 +31,31 @@ namespace CwkSocial.APPLICATION.Identity.CommandHandlers
 
             try
             {
-                var existingIdentity = await _userManager.FindByEmailAsync(request.Username);
+                var creationValidated = await ValidateIdentityDoesNotExist(result, request);
 
-                if (existingIdentity is not null)
+                if (!creationValidated) return result;
+
+                using var transaction = await _dataContext.Database.BeginTransactionAsync();
+
+                var identityUser = await CreateIdentityUserAsync(result, request, transaction);
+
+                if (identityUser is null) return result;
+
+                var userProfile = await CreateUserProfileAsync(request, transaction, identityUser);
+
+                await transaction.CommitAsync();
+
+                var claimIndetity = new ClaimsIdentity(new Claim[]
                 {
-                    var error = new Error()
-                    {
-                        Code = ErrorCode.IdentityUserAlreadyExists,
-                        Message = "Provided email address already exsits. Cannot register new user"
-                    };
+                    new Claim(JwtRegisteredClaimNames.Sub, identityUser.Email),
+                    new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                    new Claim(JwtRegisteredClaimNames.Email, identityUser.Email),
+                    new Claim("IdentityId", identityUser.Id),
+                    new Claim("UserProfileId", userProfile.UserProfileId.ToString())
+                });
 
-                    result.IsError = true;
-                    result.Errors.Add(error);
-
-                    return result;
-                }
-
-                var identity = new IdentityUser()
-                {
-                    Email = request.Username,
-                    UserName = request.Username
-                };
-
-                // creating transaction
-                using var transaction = _dataContext.Database.BeginTransaction();
-
-                var createIdentity = await _userManager.CreateAsync(identity);
-
-                if (!createIdentity.Succeeded)
-                {
-                    await transaction.RollbackAsync();
-                    result.IsError = true;
-
-                    foreach (var identityError in createIdentity.Errors)
-                    {
-                        var error = new Error()
-                        {
-                            Code = ErrorCode.IdentityCreationFailed,
-                            Message = $"{identityError.Description}"
-                        };
-
-                        result.Errors.Add(error);
-                    }
-
-                    return result;
-                }
-
-                var basicInfo = BasicInfo.CreateBasicInfo(request.FirstName, request.LastName, request.Username,
-                    request.PhoneNumber, request.DateOfBirth, request.CurrentCity);
-
-                var userProfile = UserProfile.CreateUserProfile(identity.Id, basicInfo);
-
-                try
-                {
-                    _dataContext.UserProfiles.Add(userProfile);
-                    await _dataContext.SaveChangesAsync();
-                    await transaction.CommitAsync();
-                }
-                catch (Exception ex)
-                {
-                    await transaction.RollbackAsync();
-                    throw;
-                }
-
-                var tokenHandler = new JwtSecurityTokenHandler();
-                var key = Encoding.ASCII.GetBytes(_jwtSettings.SigningKey);
-                var tokenDescriptor = new SecurityTokenDescriptor()
-                {
-                    Subject = new ClaimsIdentity(new Claim[]
-                    {
-                        new Claim(JwtRegisteredClaimNames.Sub, identity.Email),
-                        new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                        new Claim(JwtRegisteredClaimNames.Email, identity.Email),
-                        new Claim("IdentityId", identity.Id),
-                        new Claim("UserProfileId", userProfile.UserProfileId.ToString())
-                    }),
-                    Expires = DateTime.UtcNow.AddHours(2),
-                    Audience = _jwtSettings.Audiences[0],
-                    Issuer = _jwtSettings.Issuer,
-                    SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key),
-                    SecurityAlgorithms.HmacSha256Signature)
-                };
-
-                var token = tokenHandler.CreateToken(tokenDescriptor);
-                result.PayLoad = tokenHandler.WriteToken(token);
+                var token = _identityService.CreateSecurityToken(claimIndetity);
+                result.PayLoad = _identityService.WriteToken(token);
             }
             catch (UserProfileValidateException ex)
             {
@@ -146,6 +85,76 @@ namespace CwkSocial.APPLICATION.Identity.CommandHandlers
             }
 
             return result;
+        }
+
+        private async Task<bool> ValidateIdentityDoesNotExist(OperationResult<string> result, RegisterCommand request)
+        {
+            var existingIdentity = await _userManager.FindByEmailAsync(request.Username);
+
+            if (existingIdentity is not null)
+            {
+                var error = new Error()
+                {
+                    Code = ErrorCode.IdentityUserAlreadyExists,
+                    Message = "Provided email address already exsits. Cannot register new user"
+                };
+
+                result.IsError = true;
+                result.Errors.Add(error);
+
+                return false;
+            }
+
+            return true;
+        }
+
+        private async Task<IdentityUser> CreateIdentityUserAsync(OperationResult<string> result, RegisterCommand request, IDbContextTransaction transaction)
+        {
+            var identityUser = new IdentityUser() { Email = request.Username, UserName = request.Username };
+
+            var createIdentity = await _userManager.CreateAsync(identityUser);
+
+            if (!createIdentity.Succeeded)
+            {
+                await transaction.RollbackAsync();
+                result.IsError = true;
+
+                foreach (var identityError in createIdentity.Errors)
+                {
+                    var error = new Error()
+                    {
+                        Code = ErrorCode.IdentityCreationFailed,
+                        Message = $"{identityError.Description}"
+                    };
+
+                    result.Errors.Add(error);
+                }
+
+                return null;
+            }
+
+            return identityUser;
+        }
+
+        private async Task<UserProfile> CreateUserProfileAsync(RegisterCommand request, IDbContextTransaction transaction, IdentityUser identityUser)
+        {
+            try
+            {
+                var basicInfo = BasicInfo.CreateBasicInfo(request.FirstName, request.LastName, request.Username,
+                    request.PhoneNumber, request.DateOfBirth, request.CurrentCity);
+
+                var userProfile = UserProfile.CreateUserProfile(identityUser.Id, basicInfo);
+
+                _dataContext.UserProfiles.Add(userProfile);
+                await _dataContext.SaveChangesAsync();
+
+                return userProfile;
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
         }
     }
 }

@@ -6,6 +6,8 @@ using CwkSocial.APPLICATION.Posts.Commands;
 using CwkSocial.APPLICATION.Posts.Queries;
 using CwkSocial.DOMAIN.Aggregates.PostAggregate;
 using MediatR;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CwkSocial.API.Controllers.V1
@@ -14,6 +16,7 @@ namespace CwkSocial.API.Controllers.V1
     [Route(ApiRoutes.BaseRoute)]
     [ApiController]
     [CwkSocialExceptionHandler]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public class PostsController : BaseController
     {
         private readonly IMediator _mediator;

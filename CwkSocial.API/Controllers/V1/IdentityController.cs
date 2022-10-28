@@ -33,5 +33,17 @@ namespace CwkSocial.API.Controllers.V1
 
             return response.IsError ? HandlerErrorResponse(response.Errors) : Ok(response);
         }
+
+        [HttpPost]
+        [Route($"{ApiRoutes.Identity.Login}")]
+        [ValidateModel]
+        public async Task<IActionResult> Login(Login login)
+        {
+            var command = _mapper.Map<LoginCommand>(login);
+
+            var response = await _mediator.Send(command);
+
+            return response.IsError ? HandlerErrorResponse(response.Errors) : Ok(response);
+        }
     }
 }
