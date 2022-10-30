@@ -31,7 +31,12 @@ namespace CwkSocial.API.Controllers.V1
 
             var response = await _mediator.Send(command);
 
-            return response.IsError ? HandlerErrorResponse(response.Errors) : Ok(response);
+            if (response.IsError)
+                return HandlerErrorResponse(response.Errors);
+
+            var authenticationResult = new AuthenticationResult() { Token = response.PayLoad };
+
+            return Ok(authenticationResult);
         }
 
         [HttpPost]
@@ -43,7 +48,12 @@ namespace CwkSocial.API.Controllers.V1
 
             var response = await _mediator.Send(command);
 
-            return response.IsError ? HandlerErrorResponse(response.Errors) : Ok(response);
+            if (response.IsError)
+                return HandlerErrorResponse(response.Errors);
+
+            var authenticationResult = new AuthenticationResult() { Token = response.PayLoad };
+
+            return Ok(authenticationResult);
         }
     }
 }

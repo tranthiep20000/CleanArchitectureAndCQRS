@@ -45,17 +45,7 @@ namespace CwkSocial.APPLICATION.Identity.CommandHandlers
 
                 await transaction.CommitAsync();
 
-                var claimIndetity = new ClaimsIdentity(new Claim[]
-                {
-                    new Claim(JwtRegisteredClaimNames.Sub, identityUser.Email),
-                    new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                    new Claim(JwtRegisteredClaimNames.Email, identityUser.Email),
-                    new Claim("IdentityId", identityUser.Id),
-                    new Claim("UserProfileId", userProfile.UserProfileId.ToString())
-                });
-
-                var token = _identityService.CreateSecurityToken(claimIndetity);
-                result.PayLoad = _identityService.WriteToken(token);
+                result.PayLoad = GetJwtString(identityUser, userProfile);
             }
             catch (UserProfileValidateException ex)
             {
@@ -110,9 +100,13 @@ namespace CwkSocial.APPLICATION.Identity.CommandHandlers
 
         private async Task<IdentityUser> CreateIdentityUserAsync(OperationResult<string> result, RegisterCommand request, IDbContextTransaction transaction)
         {
-            var identityUser = new IdentityUser() { Email = request.Username, UserName = request.Username };
+            var identityUser = new IdentityUser()
+            {
+                Email = request.Username,
+                UserName = request.Username
+            };
 
-            var createIdentity = await _userManager.CreateAsync(identityUser);
+            var createIdentity = await _userManager.CreateAsync(identityUser, request.Password);
 
             if (!createIdentity.Succeeded)
             {
@@ -155,6 +149,21 @@ namespace CwkSocial.APPLICATION.Identity.CommandHandlers
                 await transaction.RollbackAsync();
                 throw;
             }
+        }
+
+        private string GetJwtString(IdentityUser identityUser, UserProfile userProfile)
+        {
+            var claimIndetity = new ClaimsIdentity(new Claim[]
+               {
+                    new Claim(JwtRegisteredClaimNames.Sub, identityUser.Email),
+                    new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                    new Claim(JwtRegisteredClaimNames.Email, identityUser.Email),
+                    new Claim("IdentityId", identityUser.Id),
+                    new Claim("UserProfileId", userProfile.UserProfileId.ToString())
+               });
+
+            var token = _identityService.CreateSecurityToken(claimIndetity);
+            return _identityService.WriteToken(token);
         }
     }
 }

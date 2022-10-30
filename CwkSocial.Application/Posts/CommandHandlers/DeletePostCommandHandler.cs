@@ -38,6 +38,20 @@ namespace CwkSocial.APPLICATION.Posts.CommandHandlers
                     return result;
                 }
 
+                if (post.UserProfileId != request.UserProfileId)
+                {
+                    var error = new Error()
+                    {
+                        Code = ErrorCode.NotFound,
+                        Message = $"Only the owner of a post can delete it"
+                    };
+
+                    result.IsError = true;
+                    result.Errors.Add(error);
+
+                    return result;
+                }
+
                 _dataContext.Posts.Remove(post);
                 await _dataContext.SaveChangesAsync();
 

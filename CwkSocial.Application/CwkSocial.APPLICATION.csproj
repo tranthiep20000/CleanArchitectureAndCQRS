@@ -19,6 +19,7 @@
   <ItemGroup>
     <Folder Include="Identity\QueryHandlers\" />
     <Folder Include="Identity\Queries\" />
+    <Folder Include="MappingProfiles\" />
   </ItemGroup>
 
 </Project>

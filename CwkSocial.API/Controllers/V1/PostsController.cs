@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using CwkSocial.API.Contracts.Posts.Requests;
 using CwkSocial.API.Contracts.Posts.Responses;
+using CwkSocial.API.Extensions;
 using CwkSocial.API.Filters;
 using CwkSocial.APPLICATION.Posts.Commands;
 using CwkSocial.APPLICATION.Posts.Queries;
@@ -64,7 +65,9 @@ namespace CwkSocial.API.Controllers.V1
         [ValidateModel]
         public async Task<IActionResult> CreatePost([FromBody] PostCreate postCreate)
         {
-            var command = _mapper.Map<CreatePostCommand>(postCreate);
+            var userProfileId = HttpContext.GetUserProfileIdClaimValue();
+
+            var command = new CreatePostCommand() { UserProfileId = userProfileId, TextContent = postCreate.TextContent };
 
             var response = await _mediator.Send(command);
 
@@ -82,7 +85,9 @@ namespace CwkSocial.API.Controllers.V1
         [ValidateModel]
         public async Task<IActionResult> UpdatePost(Guid id, [FromBody] PostUpdate postUpdate)
         {
-            var command = new UpdatePostCommand() { PostId = id, TextContent = postUpdate.TextContent };
+            var userProfileId = HttpContext.GetUserProfileIdClaimValue();
+
+            var command = new UpdatePostCommand() { PostId = id, TextContent = postUpdate.TextContent, UserProfileId = userProfileId };
 
             var response = await _mediator.Send(command);
 
@@ -94,7 +99,9 @@ namespace CwkSocial.API.Controllers.V1
         [ValidateGuid("id")]
         public async Task<IActionResult> DeletePost(Guid id)
         {
-            var command = new DeletePostCommand() { PostId = id };
+            var userProfileId = HttpContext.GetUserProfileIdClaimValue();
+
+            var command = new DeletePostCommand() { PostId = id, UserProfileId = userProfileId };
 
             var response = await _mediator.Send(command);
 
@@ -221,7 +228,7 @@ namespace CwkSocial.API.Controllers.V1
         [Route($"{ApiRoutes.Posts.PostInteractions}")]
         [ValidateGuid("postId")]
         [ValidateModel]
-        public  async Task<IActionResult> AddPostInteractionToPost(Guid postId, InteractionType interactionType)
+        public async Task<IActionResult> AddPostInteractionToPost(Guid postId, InteractionType interactionType)
         {
             var command = new AddPostInteractionToPostCommand() { PostId = postId, InteractionType = interactionType };
 
