@@ -28,14 +28,7 @@ namespace CwkSocial.APPLICATION.UserProfiles.CommandHandlers
 
                 if (userProfile is null)
                 {
-                    var error = new Error
-                    {
-                        Code = ErrorCode.NotFound,
-                        Message = $"No UserProfile with ID {request.UserProfileId}"
-                    };
-
-                    result.IsError = true;
-                    result.Errors.Add(error);
+                    result.AddError(ErrorCode.NotFound, string.Format(UserProfileErrorMessage.UserProfileNotFound, request.UserProfileId));
 
                     return result;
                 }
@@ -46,35 +39,17 @@ namespace CwkSocial.APPLICATION.UserProfiles.CommandHandlers
                 userProfile.UpdateBasicInfo(basicInfo);
 
                 _dataContext.UserProfiles.Update(userProfile);
-                await _dataContext.SaveChangesAsync();
+                await _dataContext.SaveChangesAsync(cancellationToken);
 
                 result.PayLoad = true;
             }
             catch(UserProfileValidateException ex)
             {
-                result.IsError = true;
-
-                ex.ValidationErrors.ForEach(e =>
-                {
-                    var error = new Error()
-                    {
-                        Code = ErrorCode.ValidationError,
-                        Message = $"{ex.Message}"
-                    };
-
-                    result.Errors.Add(error);
-                });
+                ex.ValidationErrors.ForEach(e => result.AddError(ErrorCode.ValidationError, e));
             }
             catch (Exception ex)
             {
-                var error = new Error
-                {
-                    Code = ErrorCode.UnknowError,
-                    Message = $"{ex.Message}"
-                };
-
-                result.IsError = true;
-                result.Errors.Add(error);
+                result.AddError(ErrorCode.UnknowError, ex.Message);
             }
 
             return result;

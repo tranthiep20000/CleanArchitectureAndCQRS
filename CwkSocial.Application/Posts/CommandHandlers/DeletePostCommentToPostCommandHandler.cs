@@ -26,14 +26,7 @@ namespace CwkSocial.APPLICATION.Posts.CommandHandlers
 
                 if (post is null)
                 {
-                    var error = new Error()
-                    {
-                        Code = ErrorCode.NotFound,
-                        Message = $"No Post with ID {request.PostId}"
-                    };
-
-                    result.IsError = true;
-                    result.Errors.Add(error);
+                    result.AddError(ErrorCode.NotFound, string.Format(PostErrorMessage.PostNotFound, request.PostId));
 
                     return result;
                 }
@@ -42,14 +35,7 @@ namespace CwkSocial.APPLICATION.Posts.CommandHandlers
 
                 if (postComment is null)
                 {
-                    var error = new Error
-                    {
-                        Code = ErrorCode.NotFound,
-                        Message = $"No PostComment with ID {request.CommentId}"
-                    };
-
-                    result.IsError = true;
-                    result.Errors.Add(error);
+                    result.AddError(ErrorCode.NotFound, string.Format(PostErrorMessage.PostCommentNotFound, request.CommentId));
 
                     return result;
                 }
@@ -57,20 +43,13 @@ namespace CwkSocial.APPLICATION.Posts.CommandHandlers
                 post.RemovePostComment(postComment);
 
                 _dataContext.Posts.Update(post);
-                await _dataContext.SaveChangesAsync();
+                await _dataContext.SaveChangesAsync(cancellationToken);
 
                 result.PayLoad = true;
             }
             catch (Exception ex)
             {
-                var error = new Error()
-                {
-                    Code = ErrorCode.UnknowError,
-                    Message = $"{ex.Message}"
-                };
-
-                result.IsError = true;
-                result.Errors.Add(error);
+                result.AddError(ErrorCode.UnknowError, ex.Message);
             }
 
             return result;

@@ -28,10 +28,11 @@ namespace CwkSocial.API.Controllers.V1
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAllUserProfiles()
+        public async Task<IActionResult> GetAllUserProfiles(CancellationToken cancellationToken)
         {
             var query = new GetAllUserProfileQuery();
-            var response = await _mediator.Send(query);
+
+            var response = await _mediator.Send(query, cancellationToken);
 
             if (response.IsError)
                 return HandlerErrorResponse(response.Errors);
@@ -44,10 +45,11 @@ namespace CwkSocial.API.Controllers.V1
         [HttpGet]
         [Route($"{ApiRoutes.UserProfiles.IdRoute}")]
         [ValidateGuid("id")]
-        public async Task<IActionResult> GetUserProfileById(Guid id)
+        public async Task<IActionResult> GetUserProfileById(Guid id, CancellationToken cancellationToken)
         {
             var query = new GetUserProfileByIdQuery { UserProfileId = id };
-            var response = await _mediator.Send(query);
+
+            var response = await _mediator.Send(query, cancellationToken);
 
             if (response.IsError)
                 return HandlerErrorResponse(response.Errors);
@@ -61,11 +63,13 @@ namespace CwkSocial.API.Controllers.V1
         [Route($"{ApiRoutes.UserProfiles.IdRoute}")]
         [ValidateModel]
         [ValidateGuid("id")]
-        public async Task<IActionResult> UpdateUserProfile(Guid id, [FromBody] UserProfileCreateUpdate userProfile)
+        public async Task<IActionResult> UpdateUserProfile(Guid id, [FromBody] UserProfileCreateUpdate userProfile,
+            CancellationToken cancellationToken)
         {
             var command = _mapper.Map<UpdateUserProfileBasicInfoCommand>(userProfile);
             command.UserProfileId = id;
-            var response = await _mediator.Send(command);
+
+            var response = await _mediator.Send(command, cancellationToken);
 
             return response.IsError ? HandlerErrorResponse(response.Errors) : Ok(response);
         }
@@ -73,10 +77,11 @@ namespace CwkSocial.API.Controllers.V1
         [HttpDelete]
         [Route($"{ApiRoutes.UserProfiles.IdRoute}")]
         [ValidateGuid("id")]
-        public async Task<IActionResult> DeleteUserProfile(Guid id)
+        public async Task<IActionResult> DeleteUserProfile(Guid id, CancellationToken cancellationToken)
         {
             var command = new DeleteUserProfileCommand { UserProfileId = id };
-            var response = await _mediator.Send(command);
+
+            var response = await _mediator.Send(command, cancellationToken);
 
             return response.IsError ? HandlerErrorResponse(response.Errors) : Ok(response);
         }

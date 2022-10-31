@@ -31,106 +31,66 @@ namespace CwkSocial.APPLICATION.Identity.CommandHandlers
 
             try
             {
-                var creationValidated = await ValidateIdentityDoesNotExist(result, request);
+                await ValidateIdentityDoesNotExist(result, request);
 
-                if (!creationValidated) return result;
+                if (result.IsError) return result;
 
-                using var transaction = await _dataContext.Database.BeginTransactionAsync();
+                await using var transaction = await _dataContext.Database.BeginTransactionAsync(cancellationToken);
 
-                var identityUser = await CreateIdentityUserAsync(result, request, transaction);
+                var identityUser = await CreateIdentityUserAsync(result, request, transaction, cancellationToken);
 
-                if (identityUser is null) return result;
+                if (result.IsError) return result;
 
-                var userProfile = await CreateUserProfileAsync(request, transaction, identityUser);
+                var userProfile = await CreateUserProfileAsync(request, transaction, identityUser, cancellationToken);
 
-                await transaction.CommitAsync();
+                await transaction.CommitAsync(cancellationToken);
 
                 result.PayLoad = GetJwtString(identityUser, userProfile);
             }
             catch (UserProfileValidateException ex)
             {
-                result.IsError = true;
-
-                ex.ValidationErrors.ForEach(e =>
-                {
-                    var error = new Error()
-                    {
-                        Code = ErrorCode.ValidationError,
-                        Message = $"{ex.Message}"
-                    };
-
-                    result.Errors.Add(error);
-                });
+                result.AddError(ErrorCode.ValidationError, ex.Message);
             }
             catch (Exception ex)
             {
-                var error = new Error()
-                {
-                    Code = ErrorCode.UnknowError,
-                    Message = $"{ex.Message}"
-                };
-
-                result.IsError = true;
-                result.Errors.Add(error);
+                result.AddError(ErrorCode.UnknowError, ex.Message);
             }
 
             return result;
         }
 
-        private async Task<bool> ValidateIdentityDoesNotExist(OperationResult<string> result, RegisterCommand request)
+        private async Task ValidateIdentityDoesNotExist(OperationResult<string> result, RegisterCommand request)
         {
             var existingIdentity = await _userManager.FindByEmailAsync(request.Username);
 
             if (existingIdentity is not null)
             {
-                var error = new Error()
-                {
-                    Code = ErrorCode.IdentityUserAlreadyExists,
-                    Message = "Provided email address already exsits. Cannot register new user"
-                };
-
-                result.IsError = true;
-                result.Errors.Add(error);
-
-                return false;
+                result.AddError(ErrorCode.IdentityUserAlreadyExists, IdentityErrorMessage.IdentityUserAlreadyExists);
             }
-
-            return true;
         }
 
-        private async Task<IdentityUser> CreateIdentityUserAsync(OperationResult<string> result, RegisterCommand request, IDbContextTransaction transaction)
+        private async Task<IdentityUser> CreateIdentityUserAsync(OperationResult<string> result, RegisterCommand request,
+            IDbContextTransaction transaction, CancellationToken cancellationToken)
         {
-            var identityUser = new IdentityUser()
-            {
-                Email = request.Username,
-                UserName = request.Username
-            };
+            var identityUser = new IdentityUser() { Email = request.Username, UserName = request.Username };
 
             var createIdentity = await _userManager.CreateAsync(identityUser, request.Password);
 
             if (!createIdentity.Succeeded)
             {
-                await transaction.RollbackAsync();
-                result.IsError = true;
+                await transaction.RollbackAsync(cancellationToken);
 
                 foreach (var identityError in createIdentity.Errors)
                 {
-                    var error = new Error()
-                    {
-                        Code = ErrorCode.IdentityCreationFailed,
-                        Message = $"{identityError.Description}"
-                    };
-
-                    result.Errors.Add(error);
+                    result.AddError(ErrorCode.IdentityCreationFailed, identityError.Description);
                 }
-
-                return null;
             }
 
             return identityUser;
         }
 
-        private async Task<UserProfile> CreateUserProfileAsync(RegisterCommand request, IDbContextTransaction transaction, IdentityUser identityUser)
+        private async Task<UserProfile> CreateUserProfileAsync(RegisterCommand request, IDbContextTransaction transaction,
+            IdentityUser identityUser, CancellationToken cancellationToken)
         {
             try
             {
@@ -140,14 +100,14 @@ namespace CwkSocial.APPLICATION.Identity.CommandHandlers
                 var userProfile = UserProfile.CreateUserProfile(identityUser.Id, basicInfo);
 
                 _dataContext.UserProfiles.Add(userProfile);
-                await _dataContext.SaveChangesAsync();
+                await _dataContext.SaveChangesAsync(cancellationToken);
 
                 return userProfile;
             }
             catch (Exception ex)
             {
-                await transaction.RollbackAsync();
-                throw;
+                await transaction.RollbackAsync(cancellationToken);
+                throw ex;
             }
         }
 

@@ -25,11 +25,11 @@ namespace CwkSocial.API.Controllers.V1
         [HttpPost]
         [Route($"{ApiRoutes.Identity.Registration}")]
         [ValidateModel]
-        public async Task<IActionResult> Register(UserRegistration userRegistration)
+        public async Task<IActionResult> Register(UserRegistration userRegistration, CancellationToken cancellationToken)
         {
             var command = _mapper.Map<RegisterCommand>(userRegistration);
 
-            var response = await _mediator.Send(command);
+            var response = await _mediator.Send(command, cancellationToken);
 
             if (response.IsError)
                 return HandlerErrorResponse(response.Errors);
@@ -42,11 +42,11 @@ namespace CwkSocial.API.Controllers.V1
         [HttpPost]
         [Route($"{ApiRoutes.Identity.Login}")]
         [ValidateModel]
-        public async Task<IActionResult> Login(Login login)
+        public async Task<IActionResult> Login(Login login, CancellationToken cancellationToken)
         {
             var command = _mapper.Map<LoginCommand>(login);
 
-            var response = await _mediator.Send(command);
+            var response = await _mediator.Send(command, cancellationToken);
 
             if (response.IsError)
                 return HandlerErrorResponse(response.Errors);

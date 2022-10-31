@@ -8,7 +8,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CwkSocial.APPLICATION.Posts.CommandHandlers
 {
-    internal class AddPostInteractionToPostCommandHandler : IRequestHandler<AddPostInteractionToPostCommand, OperationResult<PostInteraction>>
+    internal class AddPostInteractionToPostCommandHandler : IRequestHandler<AddPostInteractionToPostCommand,
+        OperationResult<PostInteraction>>
     {
         private readonly DataContext _dataContext;
 
@@ -17,7 +18,8 @@ namespace CwkSocial.APPLICATION.Posts.CommandHandlers
             _dataContext = dataContext;
         }
 
-        public async Task<OperationResult<PostInteraction>> Handle(AddPostInteractionToPostCommand request, CancellationToken cancellationToken)
+        public async Task<OperationResult<PostInteraction>> Handle(AddPostInteractionToPostCommand request,
+            CancellationToken cancellationToken)
         {
             var result = new OperationResult<PostInteraction>();
 
@@ -28,14 +30,7 @@ namespace CwkSocial.APPLICATION.Posts.CommandHandlers
 
                 if (post is null)
                 {
-                    var error = new Error()
-                    {
-                        Code = ErrorCode.NotFound,
-                        Message = $"No Post with ID {request.PostId}"
-                    };
-
-                    result.IsError = true;
-                    result.Errors.Add(error);
+                    result.AddError(ErrorCode.NotFound, string.Format(PostErrorMessage.PostNotFound, request.PostId));
 
                     return result;
                 }
@@ -45,35 +40,17 @@ namespace CwkSocial.APPLICATION.Posts.CommandHandlers
                 post.AddPostInteraction(postInteraction);
 
                 _dataContext.Posts.Update(post);
-                await _dataContext.SaveChangesAsync();
+                await _dataContext.SaveChangesAsync(cancellationToken);
 
                 result.PayLoad = postInteraction;
             }
             catch (PostInteractionValidateException ex)
             {
-                result.IsError = true;
-
-                ex.ValidationErrors.ForEach(e =>
-                {
-                    var error = new Error()
-                    {
-                        Code = ErrorCode.ValidationError,
-                        Message = $"{ex.Message}"
-                    };
-
-                    result.Errors.Add(error);
-                });
+                ex.ValidationErrors.ForEach(e => result.AddError(ErrorCode.ValidationError, e));
             }
             catch (Exception ex)
             {
-                var error = new Error()
-                {
-                    Code = ErrorCode.UnknowError,
-                    Message = $"{ex.Message}"
-                };
-
-                result.IsError = true;
-                result.Errors.Add(error);
+                result.AddError(ErrorCode.UnknowError, ex.Message);
             }
 
             return result;

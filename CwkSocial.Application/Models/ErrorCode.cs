@@ -13,6 +13,8 @@
         IdentityCreationFailed = 202,
         IdentityUserDoesNotExsist = 203,
         IncorrectPassword = 204,
+        PostDeleteNotPossible = 205,
+        PostUpdateNotPossible = 206,
 
         UnknowError = 999
     }

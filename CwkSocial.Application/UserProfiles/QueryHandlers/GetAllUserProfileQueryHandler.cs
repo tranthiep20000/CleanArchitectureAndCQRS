@@ -16,7 +16,8 @@ namespace CwkSocial.APPLICATION.UserProfiles.QueryHandlers
             _dataContext = dataContext;
         }
 
-        public async Task<OperationResult<IEnumerable<UserProfile>>> Handle(GetAllUserProfileQuery request, CancellationToken cancellationToken)
+        public async Task<OperationResult<IEnumerable<UserProfile>>> Handle(GetAllUserProfileQuery request,
+            CancellationToken cancellationToken)
         {
             var result = new OperationResult<IEnumerable<UserProfile>>();
 
@@ -28,14 +29,7 @@ namespace CwkSocial.APPLICATION.UserProfiles.QueryHandlers
             }
             catch (Exception ex)
             {
-                var error = new Error
-                {
-                    Code = ErrorCode.UnknowError,
-                    Message = $"{ex.Message}"
-                };
-
-                result.IsError = true;
-                result.Errors.Add(error);
+                result.AddError(ErrorCode.UnknowError, ex.Message);
             }
 
             return result;

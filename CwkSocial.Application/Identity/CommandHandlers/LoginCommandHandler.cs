@@ -32,7 +32,7 @@ namespace CwkSocial.APPLICATION.Identity.CommandHandlers
             {
                 var identityUser = await ValidateAndGetIdentityAsync(request, result);
 
-                if (identityUser is null) return result;
+                if (result.IsError) return result;
 
                 var userProfile = await _dataContext.UserProfiles
                     .FirstOrDefaultAsync(userProfile => userProfile.IdentityId == identityUser.Id);
@@ -41,14 +41,7 @@ namespace CwkSocial.APPLICATION.Identity.CommandHandlers
             }
             catch (Exception ex)
             {
-                var error = new Error()
-                {
-                    Code = ErrorCode.UnknowError,
-                    Message = $"{ex.Message}"
-                };
-
-                result.IsError = true;
-                result.Errors.Add(error);
+                result.AddError(ErrorCode.UnknowError, ex.Message);
             }
 
             return result;
@@ -60,32 +53,14 @@ namespace CwkSocial.APPLICATION.Identity.CommandHandlers
 
             if (identityUser is null)
             {
-                var error = new Error()
-                {
-                    Code = ErrorCode.IdentityUserDoesNotExsist,
-                    Message = $"Unable to find a user with the specified username"
-                };
-
-                result.IsError = true;
-                result.Errors.Add(error);
-
-                return null;
+                result.AddError(ErrorCode.IdentityUserDoesNotExsist, IdentityErrorMessage.IdentityUserDoesNotExsist);
             }
 
             var validPassword = await _userManager.CheckPasswordAsync(identityUser, request.Password);
 
             if (!validPassword)
             {
-                var error = new Error()
-                {
-                    Code = ErrorCode.IncorrectPassword,
-                    Message = $"The provided password is incorrect"
-                };
-
-                result.IsError = true;
-                result.Errors.Add(error);
-
-                return null;
+                result.AddError(ErrorCode.IncorrectPassword, IdentityErrorMessage.IncorrectPassword);
             }
 
             return identityUser;

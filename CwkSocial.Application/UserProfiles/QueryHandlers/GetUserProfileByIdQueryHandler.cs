@@ -27,14 +27,7 @@ namespace CwkSocial.APPLICATION.UserProfiles.QueryHandlers
 
                 if (userProfile is null)
                 {
-                    var error = new Error
-                    {
-                        Code = ErrorCode.NotFound,
-                        Message = $"No UserProfile with ID {request.UserProfileId}"
-                    };
-
-                    result.IsError = true;
-                    result.Errors.Add(error);
+                    result.AddError(ErrorCode.NotFound, string.Format(UserProfileErrorMessage.UserProfileNotFound, request.UserProfileId));
 
                     return result;
                 }
@@ -43,14 +36,7 @@ namespace CwkSocial.APPLICATION.UserProfiles.QueryHandlers
             }
             catch (Exception ex)
             {
-                var error = new Error
-                {
-                    Code = ErrorCode.UnknowError,
-                    Message = $"{ex.Message}"
-                };
-
-                result.IsError = true;
-                result.Errors.Add(error);
+                result.AddError(ErrorCode.UnknowError, ex.Message);
             }
 
             return result;

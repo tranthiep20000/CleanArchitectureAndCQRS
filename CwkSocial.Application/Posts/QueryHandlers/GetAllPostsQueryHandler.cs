@@ -23,18 +23,12 @@ namespace CwkSocial.APPLICATION.Posts.QueryHandlers
             try
             {
                 var posts = await _dataContext.Posts.ToListAsync();
+
                 result.PayLoad = posts;
             }
             catch (Exception ex)
             {
-                var error = new Error
-                {
-                    Code = ErrorCode.UnknowError,
-                    Message = $"{ex.Message}"
-                };
-
-                result.IsError = true;
-                result.Errors.Add(error);
+                result.AddError(ErrorCode.UnknowError, ex.Message);
             }
 
             return result;

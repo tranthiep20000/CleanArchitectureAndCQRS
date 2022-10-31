@@ -7,7 +7,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CwkSocial.APPLICATION.Posts.QueryHandlers
 {
-    internal class GetPostInteractionByIdToPostQueryHandler : IRequestHandler<GetPostInteractionByIdToPostQuery, OperationResult<PostInteraction>>
+    internal class GetPostInteractionByIdToPostQueryHandler : IRequestHandler<GetPostInteractionByIdToPostQuery,
+        OperationResult<PostInteraction>>
     {
         private readonly DataContext _dataContext;
 
@@ -16,7 +17,8 @@ namespace CwkSocial.APPLICATION.Posts.QueryHandlers
             _dataContext = dataContext;
         }
 
-        public async Task<OperationResult<PostInteraction>> Handle(GetPostInteractionByIdToPostQuery request, CancellationToken cancellationToken)
+        public async Task<OperationResult<PostInteraction>> Handle(GetPostInteractionByIdToPostQuery request,
+            CancellationToken cancellationToken)
         {
             var result = new OperationResult<PostInteraction>();
 
@@ -28,14 +30,7 @@ namespace CwkSocial.APPLICATION.Posts.QueryHandlers
 
                 if (post is null)
                 {
-                    var error = new Error()
-                    {
-                        Code = ErrorCode.NotFound,
-                        Message = $"No Post with ID {request.PostId}"
-                    };
-
-                    result.IsError = true;
-                    result.Errors.Add(error);
+                    result.AddError(ErrorCode.NotFound, string.Format(PostErrorMessage.PostNotFound, request.PostId));
 
                     return result;
                 }
@@ -44,14 +39,7 @@ namespace CwkSocial.APPLICATION.Posts.QueryHandlers
 
                 if (postInteraction is null)
                 {
-                    var error = new Error()
-                    {
-                        Code = ErrorCode.NotFound,
-                        Message = $"No PostInteraction with ID {request.InteractionId}"
-                    };
-
-                    result.IsError = true;
-                    result.Errors.Add(error);
+                    result.AddError(ErrorCode.NotFound, string.Format(PostErrorMessage.PostInteractionNotFound, request.InteractionId));
 
                     return result;
                 }
@@ -60,14 +48,7 @@ namespace CwkSocial.APPLICATION.Posts.QueryHandlers
             }
             catch (Exception ex)
             {
-                var error = new Error()
-                {
-                    Code = ErrorCode.UnknowError,
-                    Message = $"{ex.Message}"
-                };
-
-                result.IsError = true;
-                result.Errors.Add(error);
+                result.AddError(ErrorCode.UnknowError, ex.Message);
             }
 
             return result;
