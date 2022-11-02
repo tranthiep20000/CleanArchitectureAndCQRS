@@ -1,6 +1,7 @@
 ﻿using CwkSocial.APPLICATION.Models;
 using CwkSocial.APPLICATION.Posts.Commands;
 using CwkSocial.DAL.Data;
+using CwkSocial.DOMAIN.Aggregates.PostAggregate;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -23,7 +24,7 @@ namespace CwkSocial.APPLICATION.Posts.CommandHandlers
             {
                 var post = await _dataContext.Posts
                     .Include(postInteractions => postInteractions.Interactions)
-                    .FirstOrDefaultAsync(p => p.PostId == request.PostId);
+                    .FirstOrDefaultAsync(p => p.PostId == request.PostId, cancellationToken);
 
                 if (post is null)
                 {
@@ -37,6 +38,12 @@ namespace CwkSocial.APPLICATION.Posts.CommandHandlers
                 if (postInteraction is null)
                 {
                     result.AddError(ErrorCode.NotFound, string.Format(PostErrorMessage.PostInteractionNotFound, request.InteractionId));
+                    return result;
+                }
+
+                if (postInteraction.UserProfileId != request.UserProfileId)
+                {
+                    result.AddError(ErrorCode.InteractionDeleteNotPossible, PostErrorMessage.InteractionDeleteNotPossible);
 
                     return result;
                 }

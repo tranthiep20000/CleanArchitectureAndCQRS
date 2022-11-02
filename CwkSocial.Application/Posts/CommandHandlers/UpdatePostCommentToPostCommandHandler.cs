@@ -24,7 +24,7 @@ namespace CwkSocial.APPLICATION.Posts.CommandHandlers
             {
                 var post = await _dataContext.Posts
                     .Include(postComments => postComments.Comments)
-                    .FirstOrDefaultAsync(p => p.PostId == request.PostId);
+                    .FirstOrDefaultAsync(p => p.PostId == request.PostId, cancellationToken);
 
                 if (post is null)
                 {

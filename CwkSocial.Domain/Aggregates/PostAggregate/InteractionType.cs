@@ -4,11 +4,11 @@ namespace CwkSocial.DOMAIN.Aggregates.PostAggregate
 {
     public enum InteractionType
     {
-        [Description("Like")] Like = 1,
-        [Description("Dislike")] Dislike = 2,
-        [Description("Haha")] Haha = 3,
-        [Description("Wow")] Wow = 4,
-        [Description("Love")] Love = 5,
-        [Description("Angry")] Angry = 6
+        [Description("Like")] Like,
+        [Description("DisLike")] DisLike,
+        [Description("Haha")] Haha,
+        [Description("Wow")] Wow,
+        [Description("Love")] Love,
+        [Description("Angry")] Angry
     }
 }

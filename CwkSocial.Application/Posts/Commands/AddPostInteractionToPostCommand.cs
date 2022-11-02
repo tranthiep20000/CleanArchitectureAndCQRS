@@ -4,9 +4,10 @@ using MediatR;
 
 namespace CwkSocial.APPLICATION.Posts.Commands
 {
-    public class AddPostInteractionToPostCommand :IRequest<OperationResult<PostInteraction>>
+    public class AddPostInteractionToPostCommand : IRequest<OperationResult<PostInteraction>>
     {
         public Guid PostId { get; set; }
         public InteractionType InteractionType { get; set; }
+        public Guid UserProfileId { get; set; }
     }
 }

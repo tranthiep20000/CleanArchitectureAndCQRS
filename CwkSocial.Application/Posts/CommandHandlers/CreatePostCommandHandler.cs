@@ -24,7 +24,7 @@ namespace CwkSocial.APPLICATION.Posts.CommandHandlers
             try
             {
                 var userProfile = await _dataContext.UserProfiles
-                    .FirstOrDefaultAsync(userProfile => userProfile.UserProfileId == request.UserProfileId);
+                    .FirstOrDefaultAsync(userProfile => userProfile.UserProfileId == request.UserProfileId, cancellationToken);
 
                 if (userProfile is null)
                 {

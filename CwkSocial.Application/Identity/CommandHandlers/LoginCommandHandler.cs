@@ -35,7 +35,7 @@ namespace CwkSocial.APPLICATION.Identity.CommandHandlers
                 if (result.IsError) return result;
 
                 var userProfile = await _dataContext.UserProfiles
-                    .FirstOrDefaultAsync(userProfile => userProfile.IdentityId == identityUser.Id);
+                    .FirstOrDefaultAsync(userProfile => userProfile.IdentityId == identityUser.Id, cancellationToken);
 
                 result.PayLoad = GetJwtString(identityUser, userProfile);
             }

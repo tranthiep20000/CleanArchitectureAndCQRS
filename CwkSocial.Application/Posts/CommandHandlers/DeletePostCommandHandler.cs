@@ -22,7 +22,7 @@ namespace CwkSocial.APPLICATION.Posts.CommandHandlers
             try
             {
                 var post = await _dataContext.Posts
-                    .FirstOrDefaultAsync(post => post.PostId == request.PostId);
+                    .FirstOrDefaultAsync(post => post.PostId == request.PostId, cancellationToken);
 
                 if (post is null)
                 {

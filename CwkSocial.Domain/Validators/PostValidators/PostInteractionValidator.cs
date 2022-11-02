@@ -8,8 +8,7 @@ namespace CwkSocial.DOMAIN.Validators.PostValidators
         public PostInteractionValidator()
         {
             RuleFor(postInteraction => postInteraction.InteractionType)
-                .NotNull().WithMessage("Inreraction type should not be null")
-                .NotEmpty().WithMessage("Inreraction type should not be empty");
+                .NotNull().WithMessage("Inreraction type should not be null");
         }
     }
 }

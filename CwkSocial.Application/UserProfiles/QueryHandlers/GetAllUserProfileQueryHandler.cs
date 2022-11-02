@@ -23,7 +23,7 @@ namespace CwkSocial.APPLICATION.UserProfiles.QueryHandlers
 
             try
             {
-                var userProfiles =  await _dataContext.UserProfiles.ToListAsync();
+                var userProfiles =  await _dataContext.UserProfiles.ToListAsync(cancellationToken);
 
                 result.PayLoad = userProfiles;
             }

@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using CwkSocial.API.Contracts.UserProfiles.Requests;
 using CwkSocial.API.Contracts.UserProfiles.Responses;
+using CwkSocial.API.Extensions;
 using CwkSocial.API.Filters;
 using CwkSocial.APPLICATION.UserProfiles.Commands;
 using CwkSocial.APPLICATION.UserProfiles.Queries;
@@ -62,24 +63,13 @@ namespace CwkSocial.API.Controllers.V1
         [HttpPut]
         [Route($"{ApiRoutes.UserProfiles.IdRoute}")]
         [ValidateModel]
-        [ValidateGuid("id")]
-        public async Task<IActionResult> UpdateUserProfile(Guid id, [FromBody] UserProfileCreateUpdate userProfile,
+        public async Task<IActionResult> UpdateUserProfile([FromBody] UserProfileCreateUpdate userProfile,
             CancellationToken cancellationToken)
         {
+            var userProfileId = HttpContext.GetUserProfileIdClaimValue();
+
             var command = _mapper.Map<UpdateUserProfileBasicInfoCommand>(userProfile);
-            command.UserProfileId = id;
-
-            var response = await _mediator.Send(command, cancellationToken);
-
-            return response.IsError ? HandlerErrorResponse(response.Errors) : Ok(response);
-        }
-
-        [HttpDelete]
-        [Route($"{ApiRoutes.UserProfiles.IdRoute}")]
-        [ValidateGuid("id")]
-        public async Task<IActionResult> DeleteUserProfile(Guid id, CancellationToken cancellationToken)
-        {
-            var command = new DeleteUserProfileCommand { UserProfileId = id };
+            command.UserProfileId = userProfileId;
 
             var response = await _mediator.Send(command, cancellationToken);
 

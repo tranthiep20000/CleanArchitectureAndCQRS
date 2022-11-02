@@ -26,7 +26,7 @@ namespace CwkSocial.APPLICATION.Posts.CommandHandlers
             try
             {
                 var post = await _dataContext.Posts
-                    .FirstOrDefaultAsync(p => p.PostId == request.PostId);
+                    .FirstOrDefaultAsync(p => p.PostId == request.PostId, cancellationToken);
 
                 if (post is null)
                 {
@@ -35,7 +35,7 @@ namespace CwkSocial.APPLICATION.Posts.CommandHandlers
                     return result;
                 }
 
-                var postInteraction = PostInteraction.CreatePostInteraction(request.PostId, request.InteractionType);
+                var postInteraction = PostInteraction.CreatePostInteraction(request.PostId, request.InteractionType, request.UserProfileId);
 
                 post.AddPostInteraction(postInteraction);
 

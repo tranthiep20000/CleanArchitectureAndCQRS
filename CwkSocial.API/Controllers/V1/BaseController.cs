@@ -22,46 +22,13 @@ namespace CwkSocial.API.Controllers.V1
                 return NotFound(apiError);
             }
 
-            if (errors.Any(error => error.Code == ErrorCode.ValidationError))
-            {
-                var error = errors.FirstOrDefault(error => error.Code == ErrorCode.ValidationError);
-
-                apiError.StatusCode = 404;
-                apiError.StatusPhrase = "Not Found";
-                apiError.TimeStamp = DateTime.UtcNow;
-                apiError.Errors.Add(error.Message);
-
-                return NotFound(apiError);
-            }
-
-            if (errors.Any(error => error.Code == ErrorCode.IncorrectPassword))
-            {
-                var error = errors.FirstOrDefault(error => error.Code == ErrorCode.IncorrectPassword);
-
-                apiError.StatusCode = 404;
-                apiError.StatusPhrase = "Not Found";
-                apiError.TimeStamp = DateTime.UtcNow;
-                apiError.Errors.Add(error.Message);
-
-                return NotFound(apiError);
-            }
-
-            if (errors.Any(error => error.Code == ErrorCode.IdentityUserDoesNotExsist))
-            {
-                var error = errors.FirstOrDefault(error => error.Code == ErrorCode.IdentityUserDoesNotExsist);
-
-                apiError.StatusCode = 404;
-                apiError.StatusPhrase = "Not Found";
-                apiError.TimeStamp = DateTime.UtcNow;
-                apiError.Errors.Add(error.Message);
-
-                return NotFound(apiError);
-            }
-
-            apiError.StatusCode = 500;
-            apiError.StatusPhrase = "Internal Server Error";
+            apiError.StatusCode = 400;
+            apiError.StatusPhrase = "Bad Request";
             apiError.TimeStamp = DateTime.UtcNow;
-            apiError.Errors.Add("Unknow Error");
+            foreach (var error in errors)
+            {
+                apiError.Errors.Add(error.Message);
+            }
 
             return StatusCode(500, apiError);
         }

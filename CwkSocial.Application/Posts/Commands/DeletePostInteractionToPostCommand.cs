@@ -7,5 +7,6 @@ namespace CwkSocial.APPLICATION.Posts.Commands
     {
         public Guid PostId { get; set; }
         public Guid InteractionId { get; set; }
+        public Guid UserProfileId { get; set; }
     }
 }

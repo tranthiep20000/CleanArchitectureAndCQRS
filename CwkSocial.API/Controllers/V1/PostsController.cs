@@ -5,7 +5,6 @@ using CwkSocial.API.Extensions;
 using CwkSocial.API.Filters;
 using CwkSocial.APPLICATION.Posts.Commands;
 using CwkSocial.APPLICATION.Posts.Queries;
-using CwkSocial.DOMAIN.Aggregates.PostAggregate;
 using MediatR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -150,10 +149,12 @@ namespace CwkSocial.API.Controllers.V1
         public async Task<IActionResult> AddPostCommentToPost(Guid postId, [FromBody] PostCommentCreate postComment,
             CancellationToken cancellationToken)
         {
+            var userProfileId = HttpContext.GetUserProfileIdClaimValue();
+
             var command = new AddPostCommentToPostCommand()
             {
                 PostId = postId,
-                UserProfileId = postComment.UserProfileId,
+                UserProfileId = userProfileId,
                 TextComment = postComment.TextComment
             };
 
@@ -180,11 +181,12 @@ namespace CwkSocial.API.Controllers.V1
 
         [HttpDelete]
         [Route($"{ApiRoutes.Posts.CommentById}")]
-        [ValidateGuid("postId")]
-        [ValidateGuid("commentId")]
+        [ValidateGuid("postId", "commentId")]
         public async Task<IActionResult> DeletePostCommentToPost(Guid postId, Guid commentId, CancellationToken cancellationToken)
         {
-            var command = new DeletePostCommentToPostCommand() { PostId = postId, CommentId = commentId };
+            var userProfileId = HttpContext.GetUserProfileIdClaimValue();
+
+            var command = new DeletePostCommentToPostCommand() { PostId = postId, CommentId = commentId, UserProfileId = userProfileId };
 
             var response = await _mediator.Send(command, cancellationToken);
 
@@ -231,10 +233,17 @@ namespace CwkSocial.API.Controllers.V1
         [Route($"{ApiRoutes.Posts.PostInteractions}")]
         [ValidateGuid("postId")]
         [ValidateModel]
-        public async Task<IActionResult> AddPostInteractionToPost(Guid postId, InteractionType interactionType,
+        public async Task<IActionResult> AddPostInteractionToPost(Guid postId, PostInteractionCreateUpdate interactionCreate,
             CancellationToken cancellationToken)
         {
-            var command = new AddPostInteractionToPostCommand() { PostId = postId, InteractionType = interactionType };
+            var userProfileId = HttpContext.GetUserProfileIdClaimValue();
+
+            var command = new AddPostInteractionToPostCommand()
+            {
+                PostId = postId,
+                InteractionType = interactionCreate.InteractionType,
+                UserProfileId = userProfileId
+            };
 
             var response = await _mediator.Send(command, cancellationToken);
 
@@ -246,25 +255,15 @@ namespace CwkSocial.API.Controllers.V1
             return Ok(postInteracion);
         }
 
-        [HttpPut]
-        [Route($"{ApiRoutes.Posts.InteractionById}")]
-        [ValidateGuid("postId")]
-        [ValidateGuid("interactionId")]
-        [ValidateModel]
-        public async Task<IActionResult> UpdatePostInteractionToPost(Guid postId, Guid interactionId, InteractionType interactionType,
-            CancellationToken cancellationToken)
-        {
-            return Ok();
-        }
-
         [HttpDelete]
         [Route($"{ApiRoutes.Posts.InteractionById}")]
-        [ValidateGuid("postId")]
-        [ValidateGuid("interactionId")]
+        [ValidateGuid("postId", "interactionId")]
         public async Task<IActionResult> DeletePostInteractionToPost(Guid postId, Guid interactionId,
             CancellationToken cancellationToken)
         {
-            var command = new DeletePostInteractionToPostCommand() { PostId = postId, InteractionId = interactionId };
+            var userProfileId = HttpContext.GetUserProfileIdClaimValue();
+
+            var command = new DeletePostInteractionToPostCommand() { PostId = postId, InteractionId = interactionId, UserProfileId = userProfileId };
 
             var response = await _mediator.Send(command, cancellationToken);
 

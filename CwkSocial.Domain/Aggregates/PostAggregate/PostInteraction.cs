@@ -1,7 +1,5 @@
 ﻿using CwkSocial.DOMAIN.Exceptions;
 using CwkSocial.DOMAIN.Validators.PostValidators;
-using System.Text.Json.Serialization;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace CwkSocial.DOMAIN.Aggregates.PostAggregate
 {
@@ -14,14 +12,20 @@ namespace CwkSocial.DOMAIN.Aggregates.PostAggregate
         public Guid InteractionId { get; private set; }
         public Guid PostId { get; private set; }
         public InteractionType InteractionType { get; private set; }
+        public Guid UserProfileId { get; private set; }
+        public DateTime CreatedDate { get; private set; }
+        public DateTime LastModified { get; private set; }
 
         // Factories
-        public static PostInteraction CreatePostInteraction(Guid postId, InteractionType interactionType)
+        public static PostInteraction CreatePostInteraction(Guid postId, InteractionType interactionType, Guid userProfileId)
         {
-            var objectToValidate =  new PostInteraction
+            var objectToValidate = new PostInteraction
             {
                 PostId = postId,
-                InteractionType = interactionType
+                InteractionType = interactionType,
+                UserProfileId = userProfileId,
+                CreatedDate = DateTime.UtcNow,
+                LastModified = DateTime.UtcNow
             };
 
             var validator = new PostInteractionValidator();
@@ -51,6 +55,7 @@ namespace CwkSocial.DOMAIN.Aggregates.PostAggregate
             }
 
             InteractionType = type;
+            LastModified = DateTime.UtcNow;
         }
     }
 }

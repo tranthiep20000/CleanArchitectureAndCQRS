@@ -15,6 +15,8 @@
         IncorrectPassword = 204,
         PostDeleteNotPossible = 205,
         PostUpdateNotPossible = 206,
+        CommentDeleteNotPossible = 207,
+        InteractionDeleteNotPossible = 208,
 
         UnknowError = 999
     }
