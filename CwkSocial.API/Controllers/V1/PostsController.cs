@@ -9,6 +9,7 @@ using MediatR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Net.WebSockets;
 
 namespace CwkSocial.API.Controllers.V1
 {
@@ -170,13 +171,24 @@ namespace CwkSocial.API.Controllers.V1
 
         [HttpPut]
         [Route($"{ApiRoutes.Posts.CommentById}")]
-        [ValidateGuid("postId")]
-        [ValidateGuid("commentId")]
+        [ValidateGuid("postId", "commentId")]
         [ValidateModel]
         public async Task<IActionResult> UpdatePostCommentToPost(Guid postId, Guid commentId, [FromBody] PostCommentUpdate postComment,
             CancellationToken cancellationToken)
         {
-            return Ok();
+            var userProfileId = HttpContext.GetUserProfileIdClaimValue();
+
+            var command = new UpdatePostCommentToPostCommand()
+            {
+                PostId = postId,
+                CommentId = commentId,
+                UserProfileId = userProfileId,
+                TextComment = postComment.TextComment
+            };
+
+            var response = await _mediator.Send(command, cancellationToken);
+
+            return (response.IsError) ? HandlerErrorResponse(response.Errors) : Ok(response);
         }
 
         [HttpDelete]

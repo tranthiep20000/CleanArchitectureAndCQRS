@@ -17,6 +17,7 @@
         PostUpdateNotPossible = 206,
         CommentDeleteNotPossible = 207,
         InteractionDeleteNotPossible = 208,
+        CommentUpdateNotPossible = 209,
 
         UnknowError = 999
     }

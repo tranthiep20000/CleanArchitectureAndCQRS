@@ -7,8 +7,12 @@
         public const string PostCommentNotFound = "No PostComment with ID {0}";
         public const string PostInteractionNotFound = "No PostInteraction with ID {0}";
         public const string PostDeleteNotPossible = "Only the owner of a post can delete it";
-        public const string PostUpdateNotPossible = "Post update not possible because it's not the post owner that initiates the update";
+
+        public const string PostUpdateNotPossible = 
+            "Post update not possible because it's not the post owner that initiates the update";
+
         public const string CommentDeleteNotPossible = "Only the owner of a comment can delete it";
         public const string InteractionDeleteNotPossible = "Only the owner of a interaction can delete it";
+        public const string CommentUpdateNotPossible = "Only the owner of a comment can update it";
     }
 }

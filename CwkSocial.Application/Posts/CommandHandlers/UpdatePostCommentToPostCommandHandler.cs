@@ -42,8 +42,18 @@ namespace CwkSocial.APPLICATION.Posts.CommandHandlers
                     return result;
                 }
 
-                postComment.UpdateCommentText(request.TextComment);
-                // TO DO: no update post comment in post 
+                if (postComment.UserProfileId != request.UserProfileId)
+                {
+                    result.AddError(ErrorCode.CommentUpdateNotPossible, PostErrorMessage.CommentUpdateNotPossible);
+
+                    return result;
+                }
+
+                post.UpdatePostComment(request.CommentId, request.TextComment);
+                _dataContext.Posts.Update(post);
+                await _dataContext.SaveChangesAsync(cancellationToken);
+
+                result.PayLoad = true;
             }
             catch (PostCommentValidateException ex)
             {
