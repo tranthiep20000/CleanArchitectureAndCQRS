@@ -1,7 +1,8 @@
-﻿using CwkSocial.APPLICATION.Identity.Commands;
-using CwkSocial.APPLICATION.Identity.Dtos;
+﻿using CwkSocial.APPLICATION.Identity.Dtos;
+using CwkSocial.APPLICATION.Identity.Queries;
 using CwkSocial.APPLICATION.Models;
 using CwkSocial.APPLICATION.Services;
+using CwkSocial.APPLICATION.UserProfiles;
 using CwkSocial.DAL.Data;
 using CwkSocial.DOMAIN.Aggregates.UserProfileAggregate;
 using MediatR;
@@ -10,33 +11,44 @@ using Microsoft.EntityFrameworkCore;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 
-namespace CwkSocial.APPLICATION.Identity.CommandHandlers
+namespace CwkSocial.APPLICATION.Identity.QueryHandlers
 {
-    internal class LoginCommandHandler : IRequestHandler<LoginCommand, OperationResult<AuthenticationIdentityUserDto>>
+    internal class GetCurrentUserQueryHandler : IRequestHandler<GetCurrentUserQuery, OperationResult<AuthenticationIdentityUserDto>>
     {
         private readonly DataContext _dataContext;
-        private readonly UserManager<IdentityUser> _userManager;
         private readonly IdentityService _identityService;
 
-        public LoginCommandHandler(DataContext dataContext, UserManager<IdentityUser> userManager, IdentityService identityService)
+        public GetCurrentUserQueryHandler(DataContext dataContext, IdentityService identityService)
         {
             _dataContext = dataContext;
-            _userManager = userManager;
             _identityService = identityService;
         }
 
-        public async Task<OperationResult<AuthenticationIdentityUserDto>> Handle(LoginCommand request, CancellationToken cancellationToken)
+        public async Task<OperationResult<AuthenticationIdentityUserDto>> Handle(GetCurrentUserQuery request, CancellationToken cancellationToken)
         {
             var result = new OperationResult<AuthenticationIdentityUserDto>();
 
             try
             {
-                var identityUser = await ValidateAndGetIdentityAsync(request, result);
+                var identityUser = await _dataContext.Users
+                    .FirstOrDefaultAsync(user => user.Id == request.IdentityId.ToString(), cancellationToken);
 
-                if (result.IsError) return result;
+                if (identityUser is null)
+                {
+                    result.AddError(ErrorCode.IdentityUserDoesNotExsist, IdentityErrorMessage.IdentityUserDoesNotExsist);
+
+                    return result;
+                }
 
                 var userProfile = await _dataContext.UserProfiles
-                    .FirstOrDefaultAsync(userProfile => userProfile.IdentityId == identityUser.Id, cancellationToken);
+                    .FirstOrDefaultAsync(userProfile => userProfile.IdentityId == request.IdentityId.ToString(), cancellationToken);
+
+                if (userProfile is null)
+                {
+                    result.AddError(ErrorCode.NotFound, UserProfileErrorMessage.UserProfileNotFound);
+
+                    return result;
+                }
 
                 var authenticationIdentityUser = new AuthenticationIdentityUserDto()
                 {
@@ -57,25 +69,6 @@ namespace CwkSocial.APPLICATION.Identity.CommandHandlers
             }
 
             return result;
-        }
-
-        private async Task<IdentityUser> ValidateAndGetIdentityAsync(LoginCommand request, OperationResult<AuthenticationIdentityUserDto> result)
-        {
-            var identityUser = await _userManager.FindByEmailAsync(request.Username);
-
-            if (identityUser is null)
-            {
-                result.AddError(ErrorCode.IdentityUserDoesNotExsist, IdentityErrorMessage.IdentityUserDoesNotExsist);
-            }
-
-            var validPassword = await _userManager.CheckPasswordAsync(identityUser, request.Password);
-
-            if (!validPassword)
-            {
-                result.AddError(ErrorCode.IncorrectPassword, IdentityErrorMessage.IncorrectPassword);
-            }
-
-            return identityUser;
         }
 
         private string GetJwtString(IdentityUser identityUser, UserProfile userProfile)

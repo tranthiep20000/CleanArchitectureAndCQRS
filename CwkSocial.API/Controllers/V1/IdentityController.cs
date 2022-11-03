@@ -3,6 +3,7 @@ using CwkSocial.API.Contracts.Identity;
 using CwkSocial.API.Extensions;
 using CwkSocial.API.Filters;
 using CwkSocial.APPLICATION.Identity.Commands;
+using CwkSocial.APPLICATION.Identity.Queries;
 using MediatR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -37,9 +38,9 @@ namespace CwkSocial.API.Controllers.V1
             if (response.IsError)
                 return HandlerErrorResponse(response.Errors);
 
-            var authenticationResult = new AuthenticationResult() { Token = response.PayLoad };
+            var authenticationIdentityUser = _mapper.Map<AuthenticationIdentityUser>(response.PayLoad);
 
-            return Ok(authenticationResult);
+            return Ok(authenticationIdentityUser);
         }
 
         [HttpPost]
@@ -54,9 +55,9 @@ namespace CwkSocial.API.Controllers.V1
             if (response.IsError)
                 return HandlerErrorResponse(response.Errors);
 
-            var authenticationResult = new AuthenticationResult() { Token = response.PayLoad };
+            var authenticationIdentityUser = _mapper.Map<AuthenticationIdentityUser>(response.PayLoad);
 
-            return Ok(authenticationResult);
+            return Ok(authenticationIdentityUser);
         }
 
         [HttpDelete]
@@ -71,6 +72,22 @@ namespace CwkSocial.API.Controllers.V1
             var response = await _mediator.Send(command, cancellationToken);
 
             return (response.IsError) ? HandlerErrorResponse(response.Errors) : Ok(response);
+        }
+
+        [HttpGet]
+        [Route(ApiRoutes.Identity.CurrentUser)]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        public async Task<IActionResult> GetCurrentUser()
+        {
+            var identityId = HttpContext.GetIdentityIdClaimValue();
+
+            var query = new GetCurrentUserQuery() { IdentityId = identityId };
+
+            var response = await _mediator.Send(query);
+
+            var authenticationIdentityUser = _mapper.Map<AuthenticationIdentityUser>(response.PayLoad);
+
+            return Ok(authenticationIdentityUser);
         }
     }
 }

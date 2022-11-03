@@ -1,4 +1,5 @@
 ﻿using CwkSocial.APPLICATION.Identity.Commands;
+using CwkSocial.APPLICATION.Identity.Dtos;
 using CwkSocial.APPLICATION.Models;
 using CwkSocial.APPLICATION.Services;
 using CwkSocial.DAL.Data;
@@ -12,7 +13,7 @@ using System.Security.Claims;
 
 namespace CwkSocial.APPLICATION.Identity.CommandHandlers
 {
-    internal class RegisterCommandHandler : IRequestHandler<RegisterCommand, OperationResult<string>>
+    internal class RegisterCommandHandler : IRequestHandler<RegisterCommand, OperationResult<AuthenticationIdentityUserDto>>
     {
         private readonly DataContext _dataContext;
         private readonly UserManager<IdentityUser> _userManager;
@@ -25,9 +26,10 @@ namespace CwkSocial.APPLICATION.Identity.CommandHandlers
             _identityService = identityService;
         }
 
-        public async Task<OperationResult<string>> Handle(RegisterCommand request, CancellationToken cancellationToken)
+        public async Task<OperationResult<AuthenticationIdentityUserDto>> Handle(RegisterCommand request,
+            CancellationToken cancellationToken)
         {
-            var result = new OperationResult<string>();
+            var result = new OperationResult<AuthenticationIdentityUserDto>();
 
             try
             {
@@ -45,7 +47,19 @@ namespace CwkSocial.APPLICATION.Identity.CommandHandlers
 
                 await transaction.CommitAsync(cancellationToken);
 
-                result.PayLoad = GetJwtString(identityUser, userProfile);
+
+                var authenticationIdentityUser = new AuthenticationIdentityUserDto()
+                {
+                    Username = identityUser.UserName,
+                    FirstName = userProfile.BasicInfo.FirstName,
+                    LastName = userProfile.BasicInfo.LastName,
+                    DateOfBirth = userProfile.BasicInfo.DateOfBirth,
+                    PhoneNumber = userProfile.BasicInfo.PhoneNumber,
+                    CurrentCity = userProfile.BasicInfo.CurrentCity,
+                    Token = GetJwtString(identityUser, userProfile)
+                };
+               
+                result.PayLoad = authenticationIdentityUser;
             }
             catch (UserProfileValidateException ex)
             {
@@ -59,7 +73,7 @@ namespace CwkSocial.APPLICATION.Identity.CommandHandlers
             return result;
         }
 
-        private async Task ValidateIdentityDoesNotExist(OperationResult<string> result, RegisterCommand request)
+        private async Task ValidateIdentityDoesNotExist(OperationResult<AuthenticationIdentityUserDto> result, RegisterCommand request)
         {
             var existingIdentity = await _userManager.FindByEmailAsync(request.Username);
 
@@ -69,8 +83,8 @@ namespace CwkSocial.APPLICATION.Identity.CommandHandlers
             }
         }
 
-        private async Task<IdentityUser> CreateIdentityUserAsync(OperationResult<string> result, RegisterCommand request,
-            IDbContextTransaction transaction, CancellationToken cancellationToken)
+        private async Task<IdentityUser> CreateIdentityUserAsync(OperationResult<AuthenticationIdentityUserDto> result,
+            RegisterCommand request, IDbContextTransaction transaction, CancellationToken cancellationToken)
         {
             var identityUser = new IdentityUser() { Email = request.Username, UserName = request.Username };
 
